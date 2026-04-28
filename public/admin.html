@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
+  <title>Panel Admin · RutaSmart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-area">
+      <div class="logo-icon"><i class="fas fa-map-location-dot"></i></div>
+      <div>
+        <div class="logo-text">RutaSmart</div>
+        <div class="logo-sub">Admin · v1.0</div>
+      </div>
+    </div>
+  </div>
+
+  <ul class="nav-menu" id="navMenu">
+    <li class="nav-item active" data-section="dashboard">
+      <i class="fas fa-chart-pie"></i>
+      <span>Dashboard</span>
+    </li>
+    <li class="nav-item" data-section="regiones">
+      <i class="fas fa-globe-americas"></i>
+      <span>Regiones</span>
+    </li>
+    <li class="nav-item" data-section="ciudades">
+      <i class="fas fa-city"></i>
+      <span>Ciudades</span>
+    </li>
+    <li class="nav-item" data-section="sedes">
+      <i class="fas fa-building"></i>
+      <span>Sedes</span>
+    </li>
+    <li class="nav-item" data-section="usuarios">
+      <i class="fas fa-users-gear"></i>
+      <span>Usuarios</span>
+    </li>
+    <li class="nav-item" data-section="rutas">
+      <i class="fas fa-route"></i>
+      <span>Rutas</span>
+    </li>
+  </ul>
+
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="avatar" id="userAvatar">AD</div>
+      <div class="user-details">
+        <div class="user-name" id="userName">Admin</div>
+        <div class="user-role">Administrador</div>
+      </div>
+      <button class="logout-btn" id="logoutBtn" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="top-bar">
+    <div class="page-title">
+      <h1 id="sectionTitle">Panel de control</h1>
+      <p id="sectionSubtitle">Resumen general del sistema</p>
+    </div>
+    <div class="top-actions">
+      <div class="search-bar">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Buscar..." id="globalSearch" />
+      </div>
+      <div class="notification-badge">
+        <i class="far fa-bell"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-wrapper" id="dynamicContent">
+    <!-- Contenido dinámico -->
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

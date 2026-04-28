@@ -1,0 +1,31 @@
+{
+  "name": "prisma-sales-api",
+  "version": "1.0.0",
+  "description": "API de gestión de rutas y ventas con arquitectura modular",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "prisma": "^7.8.0"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "express": "^4.18.2",
+    "dotenv": "^17.4.2",
+    "pg": "^8.20.0",
+    "zod": "^3.22.4",
+    "cors": "^2.8.5",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "latest"
+  }
+}

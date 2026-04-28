@@ -1,0 +1,329 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model rol {
+  IdRol       Int     @id @default(autoincrement())
+  Nombre      String  @db.VarChar(50)
+  Descripcion String? @db.VarChar(1000)
+  usuario     usuario[]
+  @@map("rol")
+}
+
+model region {
+  IdRegion           Int      @id @default(autoincrement())
+  Nombre             String   @db.VarChar(100)
+  Codigo             String?  @db.VarChar(10)
+  Descripcion        String?  @db.VarChar(200)
+  Estado             String?  @db.VarChar(20)
+  fechaCreacion      DateTime @default(now()) @db.Timestamptz
+  fechaActualizacion DateTime? @db.Timestamptz
+  ciudad             ciudad[]
+  @@map("region")
+}
+
+model estadocliente {
+  IdEstadoCliente Int     @id @default(autoincrement())
+  Nombre          String? @db.VarChar(100)
+  Descripcion     String? @db.VarChar(200)
+  cliente         cliente[]
+  @@map("estadocliente")
+}
+
+model estadoruta {
+  IdEstadoRuta Int     @id @default(autoincrement())
+  Nombre       String? @db.VarChar(20)
+  Descripcion  String? @db.VarChar(200)
+  @@map("estadoruta")
+}
+
+model estadovisita {
+  IdEstadoVisita Int     @id @default(autoincrement())
+  Nombre         String  @db.VarChar(20)
+  Descripcion    String? @db.VarChar(200)
+  visita         visita[]
+  visitaspedido  visitaspedido[]
+  @@map("estadovisita")
+}
+
+model categoriaproducto {
+  IdCategoria Int     @id @default(autoincrement())
+  Nombre      String? @db.VarChar(100)
+  Descripcion String? @db.VarChar(200)
+  producto    producto[]
+  @@map("categoriaproducto")
+}
+
+model estadoproducto {
+  IdEstadoProducto Int     @id @default(autoincrement())
+  Nombre           String? @db.VarChar(100)
+  Descripcion      String? @db.VarChar(200)
+  producto         producto[]
+  @@map("estadoproducto")
+}
+
+model metodopago {
+  IdMetodoDePago Int     @id @default(autoincrement())
+  Nombre         String? @db.VarChar(50)
+  detallepedido  detallepedido[]
+  @@map("metodopago")
+}
+
+model iva {
+  IdIva         Int     @id @default(autoincrement())
+  Valor         Float?
+  Nombre        String? @db.VarChar(50)
+  detallepedido detallepedido[]
+  @@map("iva")
+}
+
+model sedecliente {
+  IdSedesCliente Int     @id @default(autoincrement())
+  Nombre         String? @db.VarChar(100)
+  direccion      direccion[]
+  @@map("sedecliente")
+}
+
+model ciudad {
+  IdCiudad           Int      @id @default(autoincrement())
+  IdRegion           Int?
+  Nombre             String   @db.VarChar(100)
+  Codigo             String?  @db.VarChar(10)
+  Descripcion        String?  @db.VarChar(200)
+  Estado             String?  @db.VarChar(20)
+  fechaCreacion      DateTime @default(now()) @db.Timestamptz
+  fechaActualizacion DateTime? @db.Timestamptz
+  region             region?   @relation(fields: [IdRegion], references: [IdRegion], onDelete: SetNull)
+  sede               sede[]
+  @@map("ciudad")
+}
+
+model sede {
+  IdSede             Int      @id @default(autoincrement())
+  IdCiudad           Int?
+  Nombre             String   @db.VarChar(100)
+  Codigo             String?  @db.VarChar(10)
+  Descripcion        String?  @db.VarChar(200)
+  Estado             String?  @db.VarChar(20)
+  fechaCreacion      DateTime @default(now()) @db.Timestamptz
+  fechaActualizacion DateTime? @db.Timestamptz
+  ciudad             ciudad?   @relation(fields: [IdCiudad], references: [IdCiudad], onDelete: SetNull)
+  usuario            usuario[] @relation("UsuarioSede")
+  direccion          direccion[] @relation("DireccionSede")
+  @@map("sede")
+}
+
+model usuario {
+  IdUsuario     Int      @id @default(autoincrement())
+  IdRol         Int?
+  Contrasena    String   @db.VarChar(255)
+  Cedula        String?  @db.VarChar(20)
+  Nombre        String?  @db.VarChar(50)
+  Apellido      String?  @db.VarChar(50)
+  Telefono      String?  @db.VarChar(20)
+  Direccion     String?  @db.VarChar(200)
+  Email         String?  @db.VarChar(100)
+  IdSede        Int?
+  Estado        String?  @db.VarChar(20)
+  fechaCreacion DateTime @default(now()) @db.Timestamptz
+  rol           rol?      @relation(fields: [IdRol], references: [IdRol], onDelete: SetNull)
+  sede          sede?     @relation("UsuarioSede", fields: [IdSede], references: [IdSede], onDelete: SetNull)
+  rutausuario   rutausuario[]
+  @@map("usuario")
+}
+
+model cliente {
+  IdCliente       Int      @id @default(autoincrement())
+  Cedula          String?  @db.VarChar(20)
+  PrimerNombre    String?  @db.VarChar(50)
+  SegundoNombre   String?  @db.VarChar(50)
+  PrimerApellido  String?  @db.VarChar(50)
+  Telefono        String?  @db.VarChar(20)
+  Email           String?  @db.VarChar(100)
+  IdEstadoCliente Int?
+  fechaCreacion   DateTime @default(now()) @db.Timestamptz
+  estadocliente   estadocliente? @relation(fields: [IdEstadoCliente], references: [IdEstadoCliente], onDelete: SetNull)
+  direccion       direccion[]
+  pedido          pedido[]
+  visitaspedido   visitaspedido[]
+  @@map("cliente")
+}
+
+model direccion {
+  IdDireccion        Int      @id @default(autoincrement())
+  IdCliente          Int?
+  Direccion          String?  @db.VarChar(300)
+  IdSedesCliente     Int?
+  Latitud            Float?
+  Longitud           Float?
+  IdSede             Int?
+  DireccionPrincipal Boolean? @default(false)
+  Estado             String?  @db.VarChar(20)
+  fechaCreacion      DateTime @default(now()) @db.Timestamptz
+  cliente            cliente?      @relation(fields: [IdCliente], references: [IdCliente], onDelete: SetNull)
+  sedecliente        sedecliente?  @relation(fields: [IdSedesCliente], references: [IdSedesCliente], onDelete: SetNull)
+  sede               sede?         @relation("DireccionSede", fields: [IdSede], references: [IdSede], onDelete: SetNull)
+  rutadetalle        rutadetalle[]
+  @@map("direccion")
+}
+
+model ruta {
+  IdRuta        Int      @id @default(autoincrement())
+  Nombre        String?  @db.VarChar(100)
+  Fecha         DateTime? @db.Date
+  origen_lat    Float?
+  origen_lng    Float?
+  Estado        Int?
+  fechaCreacion DateTime @default(now()) @db.Timestamptz
+  rutausuario   rutausuario[]
+  rutadetalle   rutadetalle[]
+  @@map("ruta")
+}
+
+model rutausuario {
+  IdRutaUsuario   Int       @id @default(autoincrement())
+  IdRuta          Int?
+  IdUsuario       Int?
+  FechaAsignacion DateTime? @db.Timestamptz
+  FechaInicio     DateTime? @db.Timestamptz
+  FechaFin        DateTime? @db.Timestamptz
+  Estado          String?   @db.VarChar(20)
+  ruta            ruta?     @relation(fields: [IdRuta], references: [IdRuta], onDelete: SetNull)
+  usuario         usuario?  @relation(fields: [IdUsuario], references: [IdUsuario], onDelete: SetNull)
+  visita          visita[]
+  @@map("rutausuario")
+}
+
+model rutadetalle {
+  IdRutaDetalle Int      @id @default(autoincrement())
+  IdRuta        Int?
+  IdDireccion   Int?
+  OrdenVisita   Int?
+  EstadoVisita  String?  @db.VarChar(20)
+  HoraEstimada  DateTime?
+  Latitud       Float?
+  Longitud      Float?
+  ruta          ruta?      @relation(fields: [IdRuta], references: [IdRuta], onDelete: SetNull)
+  direccion     direccion? @relation(fields: [IdDireccion], references: [IdDireccion], onDelete: SetNull)
+  visita        visita[]
+  @@map("rutadetalle")
+}
+
+model visita {
+  IdVisita             Int       @id @default(autoincrement())
+  IdRutaDetalle        Int?
+  IdRutaUsuario        Int?
+  IdEstadoVisita       Int?
+  FechaHora            DateTime? @db.Timestamptz
+  Latitud              Float?
+  Longitud             Float?
+  DistanciaErrorMetros Float?
+  EsValida             Boolean?
+  Observacion          String?   @db.VarChar(200)
+  rutadetalle          rutadetalle?  @relation(fields: [IdRutaDetalle], references: [IdRutaDetalle], onDelete: SetNull)
+  rutausuario          rutausuario?  @relation(fields: [IdRutaUsuario], references: [IdRutaUsuario], onDelete: SetNull)
+  estadovisita         estadovisita? @relation(fields: [IdEstadoVisita], references: [IdEstadoVisita], onDelete: SetNull)
+  visitaspedido        visitaspedido[]
+  @@map("visita")
+}
+
+model producto {
+  IdProducto         Int      @id @default(autoincrement())
+  Codigo             String?  @db.VarChar(20)
+  IdCategoria        Int?
+  IdEstadoProducto   Int?
+  Stock              Int?     @default(0)
+  Nombre             String?  @db.VarChar(100)
+  Descripcion        String?  @db.VarChar(200)
+  Precio             Decimal? @db.Decimal(10,2)
+  Estado             String?  @db.VarChar(20)
+  fechaCreacion      DateTime @default(now()) @db.Timestamptz
+  fechaActualizacion DateTime? @db.Timestamptz
+  categoriaproducto  categoriaproducto? @relation(fields: [IdCategoria], references: [IdCategoria], onDelete: SetNull)
+  estadoproducto     estadoproducto?    @relation(fields: [IdEstadoProducto], references: [IdEstadoProducto], onDelete: SetNull)
+  detallepedido      detallepedido[]
+  movimientostock    movimientostock[]
+  @@map("producto")
+}
+
+model movimientostock {
+  IdMovimientoStock Int     @id @default(autoincrement())
+  IdProducto        Int?
+  Stock             Int?
+  Nombre            String? @db.VarChar(100)
+  Descripcion       String? @db.VarChar(200)
+  producto          producto? @relation(fields: [IdProducto], references: [IdProducto], onDelete: SetNull)
+  @@map("movimientostock")
+}
+
+model pedido {
+  IdPedido      Int      @id @default(autoincrement())
+  IdCliente     Int?
+  FechaPedido   DateTime @default(now()) @db.Timestamptz
+  Total         Decimal? @db.Decimal(10,2)
+  Observaciones String?  @db.VarChar(200)
+  cliente       cliente? @relation(fields: [IdCliente], references: [IdCliente], onDelete: SetNull)
+  detallepedido detallepedido[]
+  visitaspedido visitaspedido[]
+  devoluciones  devoluciones[]
+  @@map("pedido")
+}
+
+model detallepedido {
+  IdDetallePedido Int      @id @default(autoincrement())
+  IdPedido        Int?
+  IdProducto      Int?
+  Cantidad        Int?
+  IdMetodoDePago  Int?
+  IdIva           Int?
+  PrecioUnitario  Decimal? @db.Decimal(10,2)
+  Subtotal        Decimal? @db.Decimal(10,2)
+  pedido          pedido?      @relation(fields: [IdPedido], references: [IdPedido], onDelete: SetNull)
+  producto        producto?    @relation(fields: [IdProducto], references: [IdProducto], onDelete: SetNull)
+  metodopago      metodopago?  @relation(fields: [IdMetodoDePago], references: [IdMetodoDePago], onDelete: SetNull)
+  iva             iva?         @relation(fields: [IdIva], references: [IdIva], onDelete: SetNull)
+  @@map("detallepedido")
+}
+
+model visitaspedido {
+  IdVisitaPedido Int      @id @default(autoincrement())
+  IdPedido       Int?
+  IdVisita       Int?
+  IdCliente      Int?
+  IdEstadoVisita Int?
+  FechaVenta     DateTime? @db.Timestamptz
+  Total          Decimal? @db.Decimal(10,2)
+  Observaciones  String?  @db.VarChar(200)
+  pedido         pedido?       @relation(fields: [IdPedido], references: [IdPedido], onDelete: SetNull)
+  visita         visita?       @relation(fields: [IdVisita], references: [IdVisita], onDelete: SetNull)
+  cliente        cliente?      @relation(fields: [IdCliente], references: [IdCliente], onDelete: SetNull)
+  estadovisita   estadovisita? @relation(fields: [IdEstadoVisita], references: [IdEstadoVisita], onDelete: SetNull)
+  comision       comision[]
+  @@map("visitaspedido")
+}
+
+model devoluciones {
+  IdDevolucion    Int      @id @default(autoincrement())
+  IdPedido        Int?
+  Motivo          String?  @db.VarChar(300)
+  FechaDevolucion DateTime @default(now()) @db.Timestamptz
+  TotalMasIva     Float?
+  pedido          pedido? @relation(fields: [IdPedido], references: [IdPedido], onDelete: SetNull)
+  @@map("devoluciones")
+}
+
+model comision {
+  IdComision         Int      @id @default(autoincrement())
+  IdVisitaPedido     Int?
+  MontoTotalVenta    Decimal? @db.Decimal(10,2)
+  PorcentajeComision Decimal? @db.Decimal(5,2)
+  MontoComision      Decimal? @db.Decimal(10,2)
+  FechaCalculo       DateTime @default(now()) @db.Timestamptz
+  Estado             String?  @db.VarChar(20)
+  visitaspedido      visitaspedido? @relation(fields: [IdVisitaPedido], references: [IdVisitaPedido], onDelete: SetNull)
+  @@map("comision")
+}
