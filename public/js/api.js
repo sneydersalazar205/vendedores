@@ -74,7 +74,20 @@ class APIClient {
   // ========== USUARIOS ==========
   async listarUsuarios() {
     const res = await this.request('/usuarios');
-    return res?.data || res || [];
+    const data = res?.data || res || [];
+    return data.map(u => ({
+      id:       u.IdUsuario,
+      cedula:   u.Cedula,
+      nombre:   u.Nombre,
+      apellido: u.Apellido,
+      email:    u.Email,
+      telefono: u.Telefono,
+      estado:   u.Estado,
+      rol:      u.rol?.Nombre || null,
+      sede:     u.sede?.Nombre || null,
+      idRol:    u.IdRol,
+      idSede:   u.IdSede,
+    }));
   }
 
   async obtenerUsuario(id) {
@@ -108,7 +121,14 @@ class APIClient {
   // ========== REGIONES ==========
   async listarRegiones() {
     const res = await this.request('/regiones');
-    return res?.data || res || [];
+    const data = res?.data || res || [];
+    return data.map(r => ({
+      id:          r.IdRegion,
+      nombre:      r.Nombre,
+      codigo:      r.Codigo,
+      descripcion: r.Descripcion,
+      estado:      r.Estado,
+    }));
   }
 
   async obtenerRegion(id) {
@@ -139,7 +159,16 @@ class APIClient {
   // ========== CIUDADES ==========
   async listarCiudades() {
     const res = await this.request('/ciudades');
-    return res?.data || res || [];
+    const data = res?.data || res || [];
+    return data.map(c => ({
+      id:          c.IdCiudad,
+      nombre:      c.Nombre,
+      codigo:      c.Codigo,
+      descripcion: c.Descripcion,
+      estado:      c.Estado,
+      region:      c.region?.Nombre || null,
+      idRegion:    c.IdRegion,
+    }));
   }
 
   async obtenerCiudad(id) {
@@ -170,7 +199,16 @@ class APIClient {
   // ========== SEDES ==========
   async listarSedes() {
     const res = await this.request('/sedes');
-    return res?.data || res || [];
+    const data = res?.data || res || [];
+    return data.map(s => ({
+      id:          s.IdSede,
+      nombre:      s.Nombre,
+      codigo:      s.Codigo,
+      descripcion: s.Descripcion,
+      estado:      s.Estado,
+      ciudad:      s.ciudad?.Nombre || null,
+      idCiudad:    s.IdCiudad,
+    }));
   }
 
   async obtenerSede(id) {
