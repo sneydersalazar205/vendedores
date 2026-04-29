@@ -9,7 +9,8 @@
     "start": "node src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "seed": "node --loader ts-node/esm prisma/seed.js"
   },
   "keywords": [],
   "author": "",
