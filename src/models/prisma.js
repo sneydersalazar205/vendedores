@@ -1,29 +1,22 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const connectionString = process.env.DATABASE_URL;
+const connectionString = process.env.DATABASE_URL || process.env.DIRECT_URL;
 
 if (!connectionString) {
-  throw new Error('DATABASE_URL environment variable is not set');
+  throw new Error('Neither DATABASE_URL nor DIRECT_URL environment variable is set');
 }
 
-const adapter = new PrismaPg({
-  connectionString,
-});
+const pool = new pg.Pool({ connectionString });
+const adapter = new PrismaPg(pool);
 
 export const prisma = new PrismaClient({ 
   adapter,
   log: ['query', 'info', 'warn', 'error'], // Opcional: para debugging
 });
 
-// Manejo de desconexión
-process.on('SIGINT', async () => {
-  console.log('Desconectando de Prisma...');
-  await prisma.$disconnect();
-  process.exit(0);
-});
-
-export default prisma;
+export { pool };

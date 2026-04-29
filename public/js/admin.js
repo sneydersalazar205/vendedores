@@ -1,4 +1,6 @@
 // admin.js - Panel de administración principal
+// Usa la instancia global 'api' creada en api.js
+
 document.addEventListener('DOMContentLoaded', async () => {
   // Referencias DOM
   const navMenu = document.getElementById('navMenu');
@@ -7,27 +9,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   const dynamicContent = document.getElementById('dynamicContent');
   const globalSearch = document.getElementById('globalSearch');
   const logoutBtn = document.getElementById('logoutBtn');
-  const modalOverlay = document.getElementById('modalOverlay');
-  const modalContent = document.getElementById('modalContent');
 
   let currentSection = 'dashboard';
   let allData = { regiones: [], ciudades: [], sedes: [], usuarios: [] }; // Cache
 
   // ---------- VERIFICACIÓN DE SESIÓN ----------
-  // IF (!API.GETTOKEN()) {
-  //   // SI NO HAY TOKEN, REDIRIGIR AL LOGIN (AJUSTA LA RUTA SEGÚN CORRESPONDA)
-  //   WINDOW.LOCATION.HREF = '/LOGIN.HTML';
-  //   RETURN;
-  // }
+  if (!api.getToken()) {
+    window.location.href = '/login.html';
+    return;
+  }
 
   // Cargar perfil del usuario
   try {
     const profile = await api.getProfile();
-    document.getElementById('userName').textContent = profile.nombre || 'Admin';
-    document.getElementById('avatarUser').textContent = 
-      (profile.nombre ? profile.nombre.charAt(0) + (profile.apellido ? profile.apellido.charAt(0) : '') : 'AD').toUpperCase();
+    const data = profile?.data || profile;
+    document.getElementById('userName').textContent = data?.Nombre || 'Admin';
+    const userAvatar = document.getElementById('userAvatar');
+    if (userAvatar) {
+      userAvatar.textContent = 
+        (data?.Nombre ? data.Nombre.charAt(0) + (data?.Apellido ? data.Apellido.charAt(0) : '') : 'AD').toUpperCase();
+    }
   } catch (err) {
-    console.warn('No se pudo cargar el perfil, usando datos por defecto');
+    console.warn('No se pudo cargar el perfil:', err.message);
   }
 
   // ---------- NAVEGACIÓN ----------
@@ -50,8 +53,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Cerrar sesión
   logoutBtn.addEventListener('click', () => {
-    console.log('Sesión cerrada');
-    alert('Sesión cerrada');
+    api.logout();
+    window.location.href = '/login.html';
   });
 
   // Cerrar modal al hacer clic fuera

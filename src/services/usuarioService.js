@@ -2,6 +2,21 @@ import usuarioRepository from '../repositories/usuarioRepository.js';
 import bcrypt from 'bcryptjs';
 
 export class UsuarioService {
+  // Login de usuario
+  async loginUsuario(email, password) {
+    const usuario = await usuarioRepository.findByEmail(email);
+    if (!usuario) {
+      throw new Error('Usuario o contraseña incorrectos');
+    }
+
+    const esValida = await bcrypt.compare(password, usuario.Contrasena);
+    if (!esValida) {
+      throw new Error('Usuario o contraseña incorrectos');
+    }
+
+    return usuario;
+  }
+
   // Registrar usuario
   async registrarUsuario(data) {
     // Validar que el email no exista

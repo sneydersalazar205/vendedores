@@ -61,7 +61,7 @@ class APIClient {
   async login(email, password) {
     const res = await this.request('/usuarios/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ Email: email, Contrasena: password }),
     });
     if (res.token) this.setToken(res.token);
     return res;

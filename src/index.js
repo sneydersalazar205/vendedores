@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { prisma } from './models/prisma.js';
+import { prisma, pool } from './models/prisma.js';
 import { errorHandler, requestLogger, validateJSON } from './middlewares/errorHandler.js';
 import { corsMiddleware, securityHeaders, rateLimiter } from './middlewares/security.js';
 
@@ -78,17 +78,30 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // ==================== INICIO DEL SERVIDOR ====================
-app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`🚀 Servidor ejecutándose en http://localhost:${PORT}`);
-  console.log(`📊 Base de datos: ${process.env.DATABASE_URL ? 'Conectada' : 'No configurada'}`);
-  console.log('📦 Capas: Models → Repositories → Services → Controllers → Routes');
+  
+  try {
+    await prisma.$connect();
+    console.log('📊 Base de datos: Conectada exitosamente');
+  } catch (error) {
+    console.error('❌ Error al conectar a la base de datos:', error.message);
+  }
+  
+  console.log('� Capas: Models → Repositories → Services → Controllers → Routes');
 });
 
 // Manejo de desconexión graciosa
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM señal recibida: cerrando servidor HTTP');
-  await prisma.$disconnect();
-  process.exit(0);
-});
+const gracefulShutdown = async (signal) => {
+  console.log(`\n${signal} señal recibida: cerrando servidor y conexiones...`);
+  server.close(async () => {
+    await prisma.$disconnect();
+    await pool.end();
+    process.exit(0);
+  });
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 export default app;

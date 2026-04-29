@@ -1,4 +1,5 @@
 import usuarioService from '../services/usuarioService.js';
+import { generateToken } from '../middlewares/auth.js';
 
 export class UsuarioController {
   async registrar(req, res) {
@@ -11,6 +12,55 @@ export class UsuarioController {
       });
     } catch (error) {
       res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  async login(req, res) {
+    try {
+      const { Email, Contrasena, email, password } = req.body;
+      const usuarioEmail = Email || email;
+      const usuarioPassword = Contrasena || password;
+
+      const usuario = await usuarioService.loginUsuario(usuarioEmail, usuarioPassword);
+      const token = generateToken(usuario.IdUsuario, usuario.Email, usuario.IdRol);
+
+      res.status(200).json({
+        success: true,
+        message: 'Login exitoso',
+        token,
+        data: {
+          IdUsuario: usuario.IdUsuario,
+          Email: usuario.Email,
+          Nombre: usuario.Nombre,
+          Apellido: usuario.Apellido,
+          IdRol: usuario.IdRol,
+        },
+      });
+    } catch (error) {
+      res.status(401).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  async getProfile(req, res) {
+    try {
+      const usuarioId = req.user?.usuarioId || req.params.id;
+      if (!usuarioId) {
+        throw new Error('ID de usuario no proporcionado');
+      }
+
+      const usuario = await usuarioService.obtenerPerfil(usuarioId);
+      res.status(200).json({
+        success: true,
+        data: usuario,
+      });
+    } catch (error) {
+      res.status(404).json({
         success: false,
         message: error.message,
       });

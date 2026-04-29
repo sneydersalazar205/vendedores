@@ -49,8 +49,8 @@ function initEventListeners() {
 }
 
 function logout() {
-  console.log('Sesión cerrada');
-  alert('Sesión cerrada - Vuelve pronto!');
+  api.logout();
+  window.location.href = '/login.html';
 }
 
 // ========== CARGAR RUTA ==========

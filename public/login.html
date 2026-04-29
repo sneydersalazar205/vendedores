@@ -140,9 +140,8 @@
 
       errorMsg.style.display = 'none';
       try {
-        // Llamada real a la API
-        await api.login(email, password);
-        // Si login exitoso, el token ya se guardó en api.js
+        const res = await api.login(email, password);
+        localStorage.setItem('userName', res.data?.Nombre || 'Usuario');
         window.location.href = '/index.html';
       } catch (err) {
         errorMsg.textContent = err.message || 'Error al iniciar sesión. Verifica tus credenciales.';
