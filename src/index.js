@@ -13,6 +13,9 @@ import pedidoRoutes from './routes/pedidoRoutes.js';
 import rutaRoutes from './routes/rutaRoutes.js';
 import visitaRoutes from './routes/visitaRoutes.js';
 import comisionRoutes from './routes/comisionRoutes.js';
+import regionRoutes from './routes/regionRoutes.js';
+import ciudadRoutes from './routes/ciudadRoutes.js';
+import sedeRoutes from './routes/sedeRoutes.js';
 
 dotenv.config();
 
@@ -46,6 +49,9 @@ app.get('/', (req, res) => {
     message: 'API de Gestión de Rutas y Ventas',
     version: '1.0.0',
     endpoints: {
+      regiones: '/api/regiones',
+      ciudades: '/api/ciudades',
+      sedes: '/api/sedes',
       usuarios: '/api/usuarios',
       clientes: '/api/clientes',
       productos: '/api/productos',
@@ -58,6 +64,9 @@ app.get('/', (req, res) => {
 });
 
 // Rutas API
+app.use('/api/regiones', regionRoutes);
+app.use('/api/ciudades', ciudadRoutes);
+app.use('/api/sedes', sedeRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/clientes', clienteRoutes);
 app.use('/api/productos', productoRoutes);
