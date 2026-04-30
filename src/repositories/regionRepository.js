@@ -10,7 +10,7 @@ export class RegionRepository {
 
   async findById(id) {
     return prisma.region.findUnique({
-      where: { IdRegion: id },
+      where: { IdRegion: parseInt(id) },
       include: { ciudad: true },
     });
   }
@@ -24,16 +24,14 @@ export class RegionRepository {
 
   async update(id, data) {
     return prisma.region.update({
-      where: { IdRegion: id },
+      where: { IdRegion: parseInt(id) },
       data,
       include: { ciudad: true },
     });
   }
 
   async delete(id) {
-    return prisma.region.delete({
-      where: { IdRegion: id },
-    });
+    await prisma.$executeRaw`DELETE FROM "region" WHERE "IdRegion" = ${parseInt(id)}`;
   }
 }
 

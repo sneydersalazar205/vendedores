@@ -10,14 +10,14 @@ export class SedeRepository {
 
   async findById(id) {
     return prisma.sede.findUnique({
-      where: { IdSede: id },
+      where: { IdSede: parseInt(id) },
       include: { ciudad: true, usuario: true },
     });
   }
 
   async findByCiudad(ciudadId) {
     return prisma.sede.findMany({
-      where: { IdCiudad: ciudadId },
+      where: { IdCiudad: parseInt(ciudadId) },
       include: { ciudad: true, usuario: true },
     });
   }
@@ -31,16 +31,14 @@ export class SedeRepository {
 
   async update(id, data) {
     return prisma.sede.update({
-      where: { IdSede: id },
+      where: { IdSede: parseInt(id) },
       data,
       include: { ciudad: true, usuario: true },
     });
   }
 
   async delete(id) {
-    return prisma.sede.delete({
-      where: { IdSede: id },
-    });
+    await prisma.$executeRaw`DELETE FROM "sede" WHERE "IdSede" = ${parseInt(id)}`;
   }
 }
 

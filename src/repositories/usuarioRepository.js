@@ -15,7 +15,7 @@ export class UsuarioRepository {
   // Obtener usuario por ID
   async findById(id) {
     return prisma.usuario.findUnique({
-      where: { IdUsuario: id },
+      where: { IdUsuario: parseInt(id) },
       include: {
         rol: true,
         sede: true,
@@ -50,7 +50,7 @@ export class UsuarioRepository {
   // Actualizar usuario
   async update(id, data) {
     return prisma.usuario.update({
-      where: { IdUsuario: id },
+      where: { IdUsuario: parseInt(id) },
       data,
       include: { rol: true, sede: true },
     });
@@ -58,9 +58,7 @@ export class UsuarioRepository {
 
   // Eliminar usuario
   async delete(id) {
-    return prisma.usuario.delete({
-      where: { IdUsuario: id },
-    });
+    await prisma.$executeRaw`DELETE FROM "usuario" WHERE "IdUsuario" = ${parseInt(id)}`;
   }
 
   // Obtener usuarios por rol

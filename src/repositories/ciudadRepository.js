@@ -10,14 +10,14 @@ export class CiudadRepository {
 
   async findById(id) {
     return prisma.ciudad.findUnique({
-      where: { IdCiudad: id },
+      where: { IdCiudad: parseInt(id) },
       include: { region: true, sede: true },
     });
   }
 
   async findByRegion(regionId) {
     return prisma.ciudad.findMany({
-      where: { IdRegion: regionId },
+      where: { IdRegion: parseInt(regionId) },
       include: { region: true, sede: true },
     });
   }
@@ -31,16 +31,14 @@ export class CiudadRepository {
 
   async update(id, data) {
     return prisma.ciudad.update({
-      where: { IdCiudad: id },
+      where: { IdCiudad: parseInt(id) },
       data,
       include: { region: true, sede: true },
     });
   }
 
   async delete(id) {
-    return prisma.ciudad.delete({
-      where: { IdCiudad: id },
-    });
+    await prisma.$executeRaw`DELETE FROM "ciudad" WHERE "IdCiudad" = ${parseInt(id)}`;
   }
 }
 
