@@ -46,7 +46,7 @@ export class RutaRepository {
   // Actualizar ruta
   async update(id, data) {
     return prisma.ruta.update({
-      where: { IdRuta: id },
+      where: { IdRuta: parseInt(id) },
       data,
       include: {
         rutausuario: true,
@@ -57,9 +57,7 @@ export class RutaRepository {
 
   // Eliminar ruta
   async delete(id) {
-    return prisma.ruta.delete({
-      where: { IdRuta: id },
-    });
+    await prisma.$executeRaw`DELETE FROM "ruta" WHERE "IdRuta" = ${parseInt(id)}`;
   }
 
   // Obtener rutas por fecha

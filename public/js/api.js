@@ -430,9 +430,10 @@ class APIClient {
 
   // ========== RUTAS ==========
   async crearRuta(data) {
+    const fechaStr = data.fecha || data.Fecha || null;
     const payload = {
       Nombre: data.nombre || data.Nombre,
-      Fecha:  data.fecha  || data.Fecha  || null,
+      Fecha:  fechaStr ? new Date(fechaStr).toISOString() : null,
       Estado: parseInt(data.estado ?? data.Estado ?? 1),
     };
     const res = await this.request('/rutas', {
@@ -472,9 +473,10 @@ class APIClient {
   }
 
   async actualizarRuta(id, data) {
+    const fechaStr = data.fecha || data.Fecha || null;
     const payload = {
       Nombre: data.nombre || data.Nombre,
-      Fecha:  data.fecha  || data.Fecha  || null,
+      Fecha:  fechaStr ? new Date(fechaStr).toISOString() : null,
       Estado: parseInt(data.estado ?? data.Estado ?? 1),
     };
     const res = await this.request(`/rutas/${id}`, {
