@@ -52,9 +52,20 @@ class APIClient {
   }
 
   async registrarUsuario(data) {
+    const payload = {
+      Nombre:     data.nombre    || data.Nombre,
+      Apellido:   data.apellido  || data.Apellido,
+      Email:      data.email     || data.Email,
+      Cedula:     data.cedula    || data.Cedula,
+      Telefono:   data.telefono  || data.Telefono,
+      Contrasena: data.contrasena || data.Contrasena || 'Vendedor123*',
+      Estado:     data.estado    || data.Estado || 'Activo',
+      IdRol:      parseInt(data.idRol || data.IdRol),
+      IdSede:     parseInt(data.idSede || data.IdSede),
+    };
     return this.request('/usuarios/registrar', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
   }
 
@@ -96,9 +107,19 @@ class APIClient {
   }
 
   async actualizarUsuario(id, data) {
+    const payload = {
+      Nombre:   data.nombre   || data.Nombre,
+      Apellido: data.apellido || data.Apellido,
+      Email:    data.email    || data.Email,
+      Cedula:   data.cedula   || data.Cedula,
+      Telefono: data.telefono || data.Telefono,
+      Estado:   data.estado   || data.Estado,
+      IdRol:    parseInt(data.idRol  || data.IdRol),
+      IdSede:   parseInt(data.idSede || data.IdSede),
+    };
     const res = await this.request(`/usuarios/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     return res?.data || res;
   }
@@ -116,6 +137,13 @@ class APIClient {
 
   async activarUsuario(id) {
     return this.request(`/usuarios/${id}/activar`, { method: 'PATCH' });
+  }
+
+  // ========== ROLES ==========
+  async listarRoles() {
+    const res = await this.request('/roles');
+    const data = res?.data || res || [];
+    return data.map(r => ({ id: r.IdRol, nombre: r.Nombre }));
   }
 
   // ========== REGIONES ==========
@@ -137,17 +165,29 @@ class APIClient {
   }
 
   async crearRegion(data) {
+    const payload = {
+      Nombre:      data.nombre || data.Nombre,
+      Codigo:      data.codigo || data.Codigo,
+      Descripcion: data.descripcion || data.Descripcion,
+      Estado:      data.estado || data.Estado || 'Activo',
+    };
     const res = await this.request('/regiones', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     return res?.data || res;
   }
 
   async actualizarRegion(id, data) {
+    const payload = {
+      Nombre:      data.nombre || data.Nombre,
+      Codigo:      data.codigo || data.Codigo,
+      Descripcion: data.descripcion || data.Descripcion,
+      Estado:      data.estado || data.Estado,
+    };
     const res = await this.request(`/regiones/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     return res?.data || res;
   }
@@ -177,17 +217,31 @@ class APIClient {
   }
 
   async crearCiudad(data) {
+    const payload = {
+      Nombre:      data.nombre || data.Nombre,
+      Codigo:      data.codigo || data.Codigo,
+      Descripcion: data.descripcion || data.Descripcion,
+      Estado:      data.estado || data.Estado || 'Activo',
+      IdRegion:    parseInt(data.regionId || data.IdRegion),
+    };
     const res = await this.request('/ciudades', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     return res?.data || res;
   }
 
   async actualizarCiudad(id, data) {
+    const payload = {
+      Nombre:      data.nombre || data.Nombre,
+      Codigo:      data.codigo || data.Codigo,
+      Descripcion: data.descripcion || data.Descripcion,
+      Estado:      data.estado || data.Estado,
+      IdRegion:    parseInt(data.regionId || data.IdRegion),
+    };
     const res = await this.request(`/ciudades/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     return res?.data || res;
   }
@@ -217,17 +271,31 @@ class APIClient {
   }
 
   async crearSede(data) {
+    const payload = {
+      Nombre:      data.nombre || data.Nombre,
+      Codigo:      data.codigo || data.Codigo,
+      Descripcion: data.descripcion || data.Descripcion,
+      Estado:      data.estado || data.Estado || 'Activo',
+      IdCiudad:    parseInt(data.ciudadId || data.IdCiudad),
+    };
     const res = await this.request('/sedes', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     return res?.data || res;
   }
 
   async actualizarSede(id, data) {
+    const payload = {
+      Nombre:      data.nombre || data.Nombre,
+      Codigo:      data.codigo || data.Codigo,
+      Descripcion: data.descripcion || data.Descripcion,
+      Estado:      data.estado || data.Estado,
+      IdCiudad:    parseInt(data.ciudadId || data.IdCiudad),
+    };
     const res = await this.request(`/sedes/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     return res?.data || res;
   }

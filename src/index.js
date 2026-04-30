@@ -49,6 +49,7 @@ app.get('/', (req, res) => {
     message: 'API de Gestión de Rutas y Ventas',
     version: '1.0.0',
     endpoints: {
+      roles: '/api/roles',
       regiones: '/api/regiones',
       ciudades: '/api/ciudades',
       sedes: '/api/sedes',
@@ -64,6 +65,14 @@ app.get('/', (req, res) => {
 });
 
 // Rutas API
+app.get('/api/roles', async (req, res) => {
+  try {
+    const roles = await prisma.rol.findMany();
+    res.json({ success: true, data: roles });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
 app.use('/api/regiones', regionRoutes);
 app.use('/api/ciudades', ciudadRoutes);
 app.use('/api/sedes', sedeRoutes);

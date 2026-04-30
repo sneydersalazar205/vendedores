@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const logoutBtn = document.getElementById('logoutBtn');
 
   let currentSection = 'dashboard';
-  let allData = { regiones: [], ciudades: [], sedes: [], usuarios: [] }; // Cache
+  let allData = { regiones: [], ciudades: [], sedes: [], usuarios: [], roles: [] }; // Cache
 
   // ---------- VERIFICACIÓN DE SESIÓN ----------
   if (!api.getToken()) {
@@ -340,16 +340,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ---------- APIS Y REFRESCO DE CACHÉ ----------
   async function refreshAllData() {
     try {
-      const [regiones, ciudades, sedes, usuarios] = await Promise.all([
+      const [regiones, ciudades, sedes, usuarios, roles] = await Promise.all([
         api.listarRegiones(),
         api.listarCiudades(),
         api.listarSedes(),
-        api.listarUsuarios()
+        api.listarUsuarios(),
+        api.listarRoles(),
       ]);
       allData.regiones = regiones;
       allData.ciudades = ciudades;
       allData.sedes = sedes;
       allData.usuarios = usuarios;
+      allData.roles = roles;
     } catch (error) {
       console.error('Error al obtener datos:', error);
       throw error;
@@ -399,7 +401,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         formHtml += `
           <div class="form-group"><label>Nombre</label><input type="text" name="nombre" value="${existing?.nombre || ''}" required></div>
           <div class="form-group"><label>Código</label><input type="text" name="codigo" value="${existing?.codigo || ''}" required></div>
-          <div class="form-group"><label>Región ID</label><input type="number" name="regionId" value="${existing?.regionId || ''}" required></div>
+          <div class="form-group"><label>Región</label>
+            <select name="regionId" required>
+              <option value="">Seleccionar región...</option>
+              ${allData.regiones.map(r => `<option value="${r.id}" ${existing?.idRegion === r.id ? 'selected' : ''}>${r.nombre}</option>`).join('')}
+            </select>
+          </div>
           <div class="form-group"><label>Estado</label>
             <select name="estado">
               <option value="Activo" ${existing?.estado === 'Activo' ? 'selected' : ''}>Activo</option>
@@ -412,8 +419,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         formHtml += `
           <div class="form-group"><label>Nombre</label><input type="text" name="nombre" value="${existing?.nombre || ''}" required></div>
           <div class="form-group"><label>Código</label><input type="text" name="codigo" value="${existing?.codigo || ''}" required></div>
-          <div class="form-group"><label>Ciudad ID</label><input type="number" name="ciudadId" value="${existing?.ciudadId || ''}" required></div>
-          <div class="form-group"><label>Dirección</label><input type="text" name="direccion" value="${existing?.direccion || ''}"></div>
+          <div class="form-group"><label>Ciudad</label>
+            <select name="ciudadId" required>
+              <option value="">Seleccionar ciudad...</option>
+              ${allData.ciudades.map(c => `<option value="${c.id}" ${existing?.idCiudad === c.id ? 'selected' : ''}>${c.nombre}</option>`).join('')}
+            </select>
+          </div>
           <div class="form-group"><label>Estado</label>
             <select name="estado">
               <option value="Activo" ${existing?.estado === 'Activo' ? 'selected' : ''}>Activo</option>
@@ -428,12 +439,18 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="form-group"><label>Nombre</label><input type="text" name="nombre" value="${existing?.nombre || ''}" required></div>
           <div class="form-group"><label>Apellido</label><input type="text" name="apellido" value="${existing?.apellido || ''}" required></div>
           <div class="form-group"><label>Email</label><input type="email" name="email" value="${existing?.email || ''}" required></div>
-          <div class="form-group"><label>Sede ID</label><input type="number" name="sedeId" value="${existing?.sedeId || ''}" required></div>
+          <div class="form-group"><label>Teléfono</label><input type="text" name="telefono" value="${existing?.telefono || ''}"></div>
+          ${!isEdit ? `<div class="form-group"><label>Contraseña</label><input type="password" name="contrasena" placeholder="Mínimo 8 caracteres" required></div>` : ''}
           <div class="form-group"><label>Rol</label>
-            <select name="rol">
-              <option value="Vendedor" ${existing?.rol === 'Vendedor' ? 'selected' : ''}>Vendedor</option>
-              <option value="Supervisor" ${existing?.rol === 'Supervisor' ? 'selected' : ''}>Supervisor</option>
-              <option value="Admin" ${existing?.rol === 'Admin' ? 'selected' : ''}>Admin</option>
+            <select name="idRol" required>
+              <option value="">Seleccionar rol...</option>
+              ${allData.roles.map(r => `<option value="${r.id}" ${existing?.idRol === r.id ? 'selected' : ''}>${r.nombre}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group"><label>Sede</label>
+            <select name="idSede" required>
+              <option value="">Seleccionar sede...</option>
+              ${allData.sedes.map(s => `<option value="${s.id}" ${existing?.idSede === s.id ? 'selected' : ''}>${s.nombre}</option>`).join('')}
             </select>
           </div>
           <div class="form-group"><label>Estado</label>
