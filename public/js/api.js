@@ -430,16 +430,30 @@ class APIClient {
 
   // ========== RUTAS ==========
   async crearRuta(data) {
+    const payload = {
+      Nombre: data.nombre || data.Nombre,
+      Fecha:  data.fecha  || data.Fecha  || null,
+      Estado: parseInt(data.estado ?? data.Estado ?? 1),
+    };
     const res = await this.request('/rutas', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     return res?.data || res;
   }
 
   async listarRutas() {
     const res = await this.request('/rutas');
-    return res?.data || res || [];
+    const data = res?.data || res || [];
+    return data.map(r => ({
+      id:        r.IdRuta,
+      nombre:    r.Nombre,
+      fecha:     r.Fecha ? new Date(r.Fecha).toLocaleDateString('es-CO') : null,
+      fechaRaw:  r.Fecha ? new Date(r.Fecha).toISOString().split('T')[0] : '',
+      estado:    r.Estado === 1 ? 'Activo' : 'Inactivo',
+      estadoRaw: r.Estado,
+      usuarios:  r.rutausuario?.length || 0,
+    }));
   }
 
   async obtenerRuta(id) {
@@ -458,9 +472,14 @@ class APIClient {
   }
 
   async actualizarRuta(id, data) {
+    const payload = {
+      Nombre: data.nombre || data.Nombre,
+      Fecha:  data.fecha  || data.Fecha  || null,
+      Estado: parseInt(data.estado ?? data.Estado ?? 1),
+    };
     const res = await this.request(`/rutas/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     return res?.data || res;
   }

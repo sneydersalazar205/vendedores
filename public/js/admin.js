@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const logoutBtn = document.getElementById('logoutBtn');
 
   let currentSection = 'dashboard';
-  let allData = { regiones: [], ciudades: [], sedes: [], usuarios: [], roles: [] }; // Cache
+  let allData = { regiones: [], ciudades: [], sedes: [], usuarios: [], roles: [], rutas: [] }; // Cache
 
   // ---------- VERIFICACIÓN DE SESIÓN ----------
   if (!api.getToken()) {
@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         case 'ciudades':  await renderCiudades(); break;
         case 'sedes':     await renderSedes(); break;
         case 'usuarios':  await renderUsuarios(); break;
+        case 'rutas':     await renderRutas(); break;
         default: await renderDashboard();
       }
     } catch (error) {
@@ -266,6 +267,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     dynamicContent.innerHTML = html;
   }
 
+  // ---------- SECCIÓN RUTAS ----------
+  async function renderRutas() {
+    sectionTitle.textContent = 'Gestión de Rutas';
+    sectionSubtitle.textContent = 'Rutas asignadas a usuarios';
+
+    await refreshAllData();
+    const data = allData.rutas;
+
+    let html = buildStats(data, 'Rutas', 'Activas');
+    html += buildTableCard('Listado de rutas', [
+      { label: 'ID', key: 'id' },
+      { label: 'Nombre', key: 'nombre' },
+      { label: 'Fecha', key: 'fecha' },
+      { label: 'Usuarios asignados', key: 'usuarios' },
+      { label: 'Estado', key: 'estado', badge: true },
+      { label: 'Acciones', actions: ['editar', 'eliminar'] }
+    ], data, 'ruta');
+
+    html += `<button class="btn-primary" style="margin-top:20px;" onclick="openModal('ruta')">
+      <i class="fas fa-plus-circle"></i> Nueva ruta
+    </button>`;
+
+    dynamicContent.innerHTML = html;
+  }
+
   // ---------- FUNCIONES AUXILIARES DE VISTA ----------
   function buildStats(data, label, activoLabel) {
     const total = data.length;
@@ -340,18 +366,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ---------- APIS Y REFRESCO DE CACHÉ ----------
   async function refreshAllData() {
     try {
-      const [regiones, ciudades, sedes, usuarios, roles] = await Promise.all([
+      const [regiones, ciudades, sedes, usuarios, roles, rutas] = await Promise.all([
         api.listarRegiones(),
         api.listarCiudades(),
         api.listarSedes(),
         api.listarUsuarios(),
         api.listarRoles(),
+        api.listarRutas(),
       ]);
       allData.regiones = regiones;
       allData.ciudades = ciudades;
       allData.sedes = sedes;
       allData.usuarios = usuarios;
       allData.roles = roles;
+      allData.rutas = rutas;
     } catch (error) {
       console.error('Error al obtener datos:', error);
       throw error;
@@ -370,7 +398,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         region: allData.regiones,
         ciudad: allData.ciudades,
         sede: allData.sedes,
-        usuario: allData.usuarios
+        usuario: allData.usuarios,
+        ruta: allData.rutas,
       };
       existing = cacheMap[entityType]?.find(item => item.id === id);
       if (!existing) {
@@ -433,6 +462,18 @@ document.addEventListener('DOMContentLoaded', async () => {
           </div>
         `;
         break;
+      case 'ruta':
+        formHtml += `
+          <div class="form-group"><label>Nombre</label><input type="text" name="nombre" value="${existing?.nombre || ''}" required></div>
+          <div class="form-group"><label>Fecha</label><input type="date" name="fecha" value="${existing?.fechaRaw || ''}"></div>
+          <div class="form-group"><label>Estado</label>
+            <select name="estado">
+              <option value="1" ${existing?.estadoRaw !== 0 ? 'selected' : ''}>Activo</option>
+              <option value="0" ${existing?.estadoRaw === 0 ? 'selected' : ''}>Inactivo</option>
+            </select>
+          </div>
+        `;
+        break;
       case 'usuario':
         formHtml += `
           <div class="form-group"><label>Cédula</label><input type="text" name="cedula" value="${existing?.cedula || ''}" ${isEdit ? 'readonly' : 'required'}></div>
@@ -489,6 +530,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             case 'ciudad': await api.actualizarCiudad(id, payload); break;
             case 'sede': await api.actualizarSede(id, payload); break;
             case 'usuario': await api.actualizarUsuario(id, payload); break;
+            case 'ruta': await api.actualizarRuta(id, payload); break;
           }
           mostrarNotificacion('Actualizado correctamente');
         } else {
@@ -497,6 +539,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             case 'ciudad': await api.crearCiudad(payload); break;
             case 'sede': await api.crearSede(payload); break;
             case 'usuario': await api.registrarUsuario(payload); break;
+            case 'ruta': await api.crearRuta(payload); break;
           }
           mostrarNotificacion('Creado correctamente');
         }
@@ -524,6 +567,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         case 'ciudad': await api.eliminarCiudad(id); break;
         case 'sede': await api.eliminarSede(id); break;
         case 'usuario': await api.desactivarUsuario(id); break; // Soft delete
+        case 'ruta': await api.eliminarRuta(id); break;
       }
       mostrarNotificacion('Eliminado correctamente');
       renderSection(currentSection);
