@@ -146,6 +146,13 @@ class APIClient {
     return data.map(r => ({ id: r.IdRol, nombre: r.Nombre }));
   }
 
+  // ========== ESTADOS DE VISITA ==========
+  async listarEstadosVisita() {
+    const res = await this.request('/estadosvisita');
+    const data = res?.data || res || [];
+    return data.map(e => ({ id: e.IdEstadoVisita, nombre: e.Nombre }));
+  }
+
   // ========== REGIONES ==========
   async listarRegiones() {
     const res = await this.request('/regiones');
@@ -469,7 +476,32 @@ class APIClient {
 
   async obtenerRutasUsuario(usuarioId) {
     const res = await this.request(`/rutas/usuario/${usuarioId}`);
-    return res?.data || res || [];
+    const data = res?.data || res || [];
+    // data es array de rutausuario, cada uno tiene .ruta con .rutadetalle[]
+    return data.map(ru => ({
+      idRutaUsuario: ru.IdRutaUsuario,
+      idRuta: ru.ruta?.IdRuta,
+      nombre: ru.ruta?.Nombre || 'Sin nombre',
+      fecha: ru.ruta?.Fecha ? new Date(ru.ruta.Fecha).toLocaleDateString('es-CO') : '—',
+      estado: ru.Estado,
+      puntos: (ru.ruta?.rutadetalle || []).map(d => ({
+        idRutaDetalle: d.IdRutaDetalle,
+        orden: d.OrdenVisita || 0,
+        estadoVisita: d.EstadoVisita,
+        latitud: d.Latitud,
+        longitud: d.Longitud,
+        direccion: d.direccion?.Direccion || '—',
+        latDireccion: d.direccion?.Latitud,
+        lngDireccion: d.direccion?.Longitud,
+        cliente: d.direccion?.cliente
+          ? {
+              id: d.direccion.cliente.IdCliente,
+              nombre: [d.direccion.cliente.PrimerNombre, d.direccion.cliente.PrimerApellido].filter(Boolean).join(' '),
+              telefono: d.direccion.cliente.Telefono || '—',
+            }
+          : null,
+      })),
+    }));
   }
 
   async actualizarRuta(id, data) {

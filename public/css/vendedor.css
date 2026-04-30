@@ -665,3 +665,273 @@ form {
     flex-direction: column;
   }
 }
+
+/* ========== SELECTOR DE RUTAS ========== */
+.ruta-cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ruta-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.25s;
+  border-left: 5px solid var(--primary);
+}
+
+.ruta-card:hover {
+  transform: translateX(6px);
+  box-shadow: 0 8px 20px rgba(37,99,235,0.15);
+}
+
+.ruta-card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #eef2ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.ruta-card-info {
+  flex: 1;
+}
+
+.ruta-card-info h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.ruta-card-info p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 2px 0;
+}
+
+.ruta-card-arrow {
+  color: #cbd5e1;
+  font-size: 1rem;
+}
+
+.badge-estado {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.badge-activa {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* ========== PUNTO VISITADO ========== */
+.timeline-item.visitado .point-card {
+  border-left-color: #15803d;
+  opacity: 0.75;
+}
+
+.timeline-item.visitado .timeline-marker i {
+  background: #15803d;
+}
+
+.visit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.visit-badge-done {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* ========== BTN VISIT (nuevo estilo) ========== */
+.btn-visit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, var(--primary), #1d4ed8);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-visit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+}
+
+/* ========== MODAL VISITA ========== */
+.geo-status {
+  margin: 0 24px 4px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.geo-checking { background: #f1f5f9; color: #64748b; }
+.geo-valid    { background: #dcfce7; color: #15803d; }
+.geo-warn     { background: #fef9c3; color: #854d0e; }
+
+.modal-cliente-info {
+  padding: 0 24px 16px;
+}
+
+.modal-cliente-nombre {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-cliente-dir {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+  background: white;
+}
+
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px #2563eb15;
+}
+
+/* ========== PRODUCTOS EN MODAL ========== */
+.productos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.producto-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.producto-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.producto-nombre {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #0f172a;
+}
+
+.producto-precio {
+  font-size: 0.8rem;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.producto-stock {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.producto-cantidad {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.producto-cantidad button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+  background: white;
+  color: var(--primary);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: all 0.15s;
+}
+
+.producto-cantidad button:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.producto-cantidad span {
+  font-weight: 700;
+  min-width: 20px;
+  text-align: center;
+  color: #0f172a;
+}
+
+.total-venta {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: #eef2ff;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: var(--primary);
+  text-align: right;
+}
+

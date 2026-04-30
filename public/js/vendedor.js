@@ -1,337 +1,410 @@
-// vendedor.js - Lógica para el panel del vendedor
-const api = new APIClient();
+// vendedor.js - Panel del vendedor conectado a la API REST
 
-// Estado de la aplicación
-let rutaActual = null;
-let puntosClientes = [];
-
-// DOM Elements
-const userNameElement = document.getElementById('userName');
-const logoutBtn = document.getElementById('logoutBtn');
-const btnAddClient = document.getElementById('btnAddClient');
-const closeModalBtn = document.getElementById('closeModalBtn');
-const btnCancelForm = document.getElementById('btnCancelForm');
-const formNuevoCliente = document.getElementById('formNuevoCliente');
-const modalNuevoCliente = document.getElementById('modalNuevoCliente');
-const pointsList = document.getElementById('pointsList');
+// ========== ESTADO GLOBAL ==========
+let perfilUsuario = null;
+let rutasDelVendedor = [];
+let rutaActiva = null;       // objeto mapeado de obtenerRutasUsuario
+let estadosVisita = [];
+let productosCache = [];
+let puntoActual = null;      // rutadetalle seleccionado para registrar visita
+let geoActual = null;        // { lat, lng } del GPS actual
+let carritoVenta = {};       // { idProducto: cantidad }
 
 // ========== INICIALIZACIÓN ==========
-document.addEventListener('DOMContentLoaded', () => {
-  // Autenticación omitida - acceso directo
-  loadUserInfo();
-  initEventListeners();
-  cargarRutaDelVendedor();
-});
-
-function checkAuth() {
-  // Autenticación omitida - acceso directo permitido
-  console.log('Acceso sin autenticación permitido');
-}
-
-function loadUserInfo() {
-  const userName = localStorage.getItem('userName') || 'Vendedor';
-  userNameElement.textContent = userName;
-}
-
-function initEventListeners() {
-  btnAddClient.addEventListener('click', openModal);
-  closeModalBtn.addEventListener('click', closeModal);
-  btnCancelForm.addEventListener('click', closeModal);
-  formNuevoCliente.addEventListener('submit', handleSubmitForm);
-  logoutBtn.addEventListener('click', logout);
-  
-  // Cerrar modal si se hace clic fuera
-  modalNuevoCliente.addEventListener('click', (e) => {
-    if (e.target === modalNuevoCliente) {
-      closeModal();
-    }
-  });
-}
-
-function logout() {
-  api.logout();
-  window.location.href = '/login.html';
-}
-
-// ========== CARGAR RUTA ==========
-async function cargarRutaDelVendedor() {
-  try {
-    // Simulamos carga de ruta del vendedor
-    // En producción, obtendrías la ruta del usuario actual desde la API
-    rutaActual = {
-      id: 1,
-      nombre: 'Ruta Centro - Zona 1',
-      vendedor: localStorage.getItem('userName') || 'Vendedor',
-      sede: 'Sede Centro',
-      fechaInicio: new Date().toLocaleDateString('es-CO'),
-      clientes: [
-        {
-          id: 1,
-          nombre: 'Juan García',
-          calle: 'Carrera 45',
-          numero: '23-40',
-          barrio: 'Centro',
-          ciudad: 'Bogotá',
-          telefono: '3001234567',
-          orden: 1
-        },
-        {
-          id: 2,
-          nombre: 'María López',
-          calle: 'Carrera 48',
-          numero: '15-60',
-          barrio: 'La Candelaria',
-          ciudad: 'Bogotá',
-          telefono: '3015678901',
-          orden: 3
-        },
-        {
-          id: 3,
-          nombre: 'Carlos Rodríguez',
-          calle: 'Calle 13',
-          numero: '8-50',
-          barrio: 'Chapinero',
-          ciudad: 'Bogotá',
-          telefono: '3109876543',
-          orden: 2
-        }
-      ]
-    };
-
-    document.getElementById('routeTitle').textContent = `${rutaActual.nombre}`;
-    document.getElementById('routeSubtitle').textContent = `${rutaActual.fechaInicio} - ${rutaActual.vendedor}`;
-    document.getElementById('sedeInfo').textContent = rutaActual.sede;
-
-    // Ordenar clientes por calle descendente
-    ordenarClientesPorCalle();
-    mostrarPuntos();
-  } catch (error) {
-    console.error('Error al cargar ruta:', error);
-    showError('Error al cargar la ruta');
-  }
-}
-
-// ========== ORDENAR CLIENTES ==========
-function ordenarClientesPorCalle() {
-  if (!rutaActual || !rutaActual.clientes) return;
-  
-  // Ordenar por calle alfabéticamente (A a Z) - orden de visita ascendente
-  rutaActual.clientes.sort((a, b) => {
-    const calleA = a.calle.toLowerCase();
-    const calleB = b.calle.toLowerCase();
-    return calleA.localeCompare(calleB);
-  });
-
-  // Reasignar orden de visita
-  rutaActual.clientes.forEach((cliente, index) => {
-    cliente.orden = index + 1;
-  });
-}
-
-// ========== MOSTRAR PUNTOS ==========
-function mostrarPuntos() {
-  const pointsList = document.getElementById('pointsList');
-  pointsList.innerHTML = '';
-
-  if (!rutaActual || rutaActual.clientes.length === 0) {
-    pointsList.innerHTML = `
-      <div class="empty-state">
-        <i class="fas fa-map-pin"></i>
-        <h3>Sin puntos de visita</h3>
-        <p>Agrega el primer cliente para comenzar tu ruta</p>
-      </div>
-    `;
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!api.getToken()) {
+    window.location.href = '/login.html';
     return;
   }
 
-  // Generar tarjetas de puntos
-  puntosClientes = rutaActual.clientes.map(cliente => crearTarjetaPunto(cliente));
-  pointsList.innerHTML = puntosClientes.join('');
-
-  // Agregar event listeners a los botones
-  document.querySelectorAll('.btn-visit').forEach(btn => {
-    btn.addEventListener('click', handleVisitarPunto);
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    api.logout();
+    window.location.href = '/login.html';
   });
 
-  document.querySelectorAll('.btn-delete').forEach(btn => {
-    btn.addEventListener('click', handleEliminarPunto);
+  document.getElementById('btnVolverRutas').addEventListener('click', mostrarSelectorRutas);
+
+  // Modales
+  document.getElementById('closeModalVisita').addEventListener('click', cerrarModalVisita);
+  document.getElementById('cancelVisita').addEventListener('click', cerrarModalVisita);
+  document.getElementById('modalVisita').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('modalVisita')) cerrarModalVisita();
   });
-}
+  document.getElementById('formVisita').addEventListener('submit', handleSubmitVisita);
+  document.getElementById('visitaEstado').addEventListener('change', onEstadoVisitaChange);
 
-// ========== CREAR TARJETA DE PUNTO ==========
-function crearTarjetaPunto(cliente) {
-  const direccionCompleta = `${cliente.calle} #${cliente.numero}, ${cliente.barrio}`;
-  const orden = cliente.orden || 0;
-
-  return `
-    <div class="timeline-item">
-      <div class="timeline-marker">
-        <i class="fas fa-map-marker-alt"></i>
-        <span class="marker-label">${orden}°</span>
-      </div>
-      <div class="point-card" data-cliente-id="${cliente.id}">
-        <div class="point-number">${orden}</div>
-        <h3>${cliente.nombre}</h3>
-        <div class="point-detail">
-          <i class="fas fa-map-pin"></i>
-          <span><strong>${cliente.calle}</strong> #${cliente.numero}</span>
-        </div>
-        <div class="point-detail">
-          <i class="fas fa-home"></i>
-          <span>${cliente.barrio}, ${cliente.ciudad}</span>
-        </div>
-        <div class="point-detail">
-          <i class="fas fa-phone"></i>
-          <span>${cliente.telefono}</span>
-        </div>
-        <div class="point-actions">
-          <button class="btn-visit" data-cliente-id="${cliente.id}">
-            <i class="fas fa-check-circle"></i> Visitado
-          </button>
-          <button class="btn-delete" data-cliente-id="${cliente.id}">
-            <i class="fas fa-trash-alt"></i> Eliminar
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-// ========== EVENTOS DE PUNTOS ==========
-function handleVisitarPunto(e) {
-  const clienteId = parseInt(e.currentTarget.dataset.clienteId);
-  console.log('Visitando cliente:', clienteId);
-  
-  // Cambiar estado visual
-  e.currentTarget.style.opacity = '0.5';
-  e.currentTarget.disabled = true;
-
-  // Aquí iría la lógica para registrar la visita en la API
-  setTimeout(() => {
-    showSuccess('Visita registrada correctamente');
-  }, 500);
-}
-
-function handleEliminarPunto(e) {
-  const clienteId = parseInt(e.currentTarget.dataset.clienteId);
-  
-  if (!confirm('¿Eliminar este cliente de la ruta?')) {
-    return;
-  }
-
-  if (rutaActual && rutaActual.clientes) {
-    rutaActual.clientes = rutaActual.clientes.filter(c => c.id !== clienteId);
-    mostrarPuntos();
-    showSuccess('Cliente eliminado de la ruta');
-  }
-}
-
-// ========== MODAL DE NUEVO CLIENTE ==========
-function openModal() {
-  modalNuevoCliente.classList.add('show');
-  formNuevoCliente.reset();
-}
-
-function closeModal() {
-  modalNuevoCliente.classList.remove('show');
-  formNuevoCliente.reset();
-}
-
-async function handleSubmitForm(e) {
-  e.preventDefault();
-
-  const nuevoCliente = {
-    id: Math.max(...rutaActual.clientes.map(c => c.id), 0) + 1,
-    nombre: document.getElementById('clientNombre').value,
-    calle: document.getElementById('clientCalle').value,
-    numero: document.getElementById('clientNumero').value,
-    barrio: document.getElementById('clientBarrio').value,
-    ciudad: 'Bogotá', // Podría ser dinámico
-    telefono: document.getElementById('clientTelefono').value,
-    orden: 0
-  };
+  mostrarLoading(true);
 
   try {
-    // Validación básica
-    if (!nuevoCliente.nombre || !nuevoCliente.calle || !nuevoCliente.numero) {
-      showError('Por favor completa todos los campos obligatorios');
+    // Cargar datos en paralelo
+    const [perfil, estados, productos] = await Promise.all([
+      api.getProfile(),
+      api.listarEstadosVisita(),
+      api.listarProductos(),
+    ]);
+
+    perfilUsuario = perfil?.data || perfil;
+    estadosVisita = estados;
+    productosCache = (productos?.data || productos || []);
+
+    document.getElementById('userName').textContent =
+      `${perfilUsuario?.Nombre || ''} ${perfilUsuario?.Apellido || ''}`.trim() || 'Vendedor';
+
+    // Cargar rutas del vendedor
+    rutasDelVendedor = await api.obtenerRutasUsuario(perfilUsuario.IdUsuario);
+
+    if (rutasDelVendedor.length === 0) {
+      mostrarLoading(false);
+      mostrarEmpty('No tienes rutas asignadas para hoy.');
       return;
     }
 
-    // Agregar cliente a la ruta
-    rutaActual.clientes.push(nuevoCliente);
+    if (rutasDelVendedor.length === 1) {
+      // Una sola ruta → cargar directo
+      await seleccionarRuta(rutasDelVendedor[0]);
+    } else {
+      mostrarSelectorRutas();
+    }
+  } catch (err) {
+    console.error(err);
+    mostrarEmpty('Error al cargar datos: ' + err.message);
+  }
+});
 
-    // Reordenar por calle
-    ordenarClientesPorCalle();
+// ========== NAVEGACIÓN ENTRE VISTAS ==========
+function mostrarLoading(visible) {
+  document.getElementById('loadingState').style.display = visible ? 'block' : 'none';
+  document.getElementById('rutaSelector').style.display = 'none';
+  document.getElementById('rutaDetalle').style.display = 'none';
+}
 
-    // Mostrar actualización
-    mostrarPuntos();
-    closeModal();
+function mostrarEmpty(msg) {
+  document.getElementById('loadingState').style.display = 'block';
+  document.getElementById('loadingState').innerHTML = `
+    <div class="empty-state">
+      <i class="fas fa-map-pin" style="font-size:2rem;color:#9ca3af;"></i>
+      <p style="color:#6b7280;margin-top:12px;">${msg}</p>
+    </div>`;
+}
 
-    showSuccess('Cliente agregado a la ruta correctamente');
-  } catch (error) {
-    console.error('Error al agregar cliente:', error);
-    showError('Error al agregar el cliente: ' + error.message);
+function mostrarSelectorRutas() {
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('rutaDetalle').style.display = 'none';
+  document.getElementById('rutaSelector').style.display = 'block';
+  renderSelectorRutas();
+}
+
+function mostrarDetalleRuta() {
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('rutaSelector').style.display = 'none';
+  document.getElementById('rutaDetalle').style.display = 'block';
+}
+
+// ========== SELECTOR DE RUTAS ==========
+function renderSelectorRutas() {
+  const container = document.getElementById('rutaCards');
+  container.innerHTML = rutasDelVendedor.map(ruta => `
+    <div class="ruta-card" onclick="seleccionarRuta(${JSON.stringify(ruta).replace(/"/g, '&quot;')})">
+      <div class="ruta-card-icon"><i class="fas fa-route"></i></div>
+      <div class="ruta-card-info">
+        <h3>${ruta.nombre}</h3>
+        <p><i class="fas fa-calendar-alt"></i> ${ruta.fecha}</p>
+        <p><i class="fas fa-map-pin"></i> ${ruta.puntos.length} puntos</p>
+        <span class="badge-estado ${ruta.estado === 'activa' ? 'badge-activa' : ''}">${ruta.estado || 'Pendiente'}</span>
+      </div>
+      <i class="fas fa-chevron-right ruta-card-arrow"></i>
+    </div>
+  `).join('');
+}
+
+// ========== SELECCIONAR RUTA ==========
+async function seleccionarRuta(ruta) {
+  rutaActiva = ruta;
+
+  document.getElementById('routeTitle').textContent = ruta.nombre;
+  document.getElementById('routeSubtitle').textContent = `${ruta.fecha} · ${ruta.puntos.length} puntos`;
+  document.getElementById('sedeInfo').textContent =
+    perfilUsuario?.sede?.Nombre || perfilUsuario?.sede || 'Sede Principal';
+
+  mostrarDetalleRuta();
+  renderPuntos(ruta.puntos);
+}
+
+// ========== RENDER TIMELINE DE PUNTOS ==========
+function renderPuntos(puntos) {
+  const list = document.getElementById('pointsList');
+
+  if (!puntos || puntos.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-map-pin"></i>
+        <h3>Sin puntos de visita</h3>
+        <p>Esta ruta no tiene direcciones asignadas</p>
+      </div>`;
+    return;
+  }
+
+  const ordenados = [...puntos].sort((a, b) => (a.orden || 0) - (b.orden || 0));
+
+  list.innerHTML = ordenados.map(punto => {
+    const visitada = punto.estadoVisita && punto.estadoVisita !== 'Pendiente';
+    const clienteNombre = punto.cliente?.nombre || 'Cliente sin nombre';
+    const clienteTel = punto.cliente?.telefono || '—';
+
+    return `
+      <div class="timeline-item ${visitada ? 'visitado' : ''}" id="punto-${punto.idRutaDetalle}">
+        <div class="timeline-marker">
+          <i class="fas ${visitada ? 'fa-check-circle' : 'fa-map-marker-alt'}"></i>
+          <span class="marker-label">${punto.orden}°</span>
+        </div>
+        <div class="point-card" data-id="${punto.idRutaDetalle}">
+          <div class="point-number">${punto.orden}</div>
+          <h3>${clienteNombre}</h3>
+          <div class="point-detail">
+            <i class="fas fa-map-pin"></i>
+            <span>${punto.direccion}</span>
+          </div>
+          <div class="point-detail">
+            <i class="fas fa-phone"></i>
+            <span>${clienteTel}</span>
+          </div>
+          ${visitada
+            ? `<div class="visit-badge visit-badge-done"><i class="fas fa-check"></i> ${punto.estadoVisita}</div>`
+            : `<button class="btn-visit" onclick="abrirModalVisita(${punto.idRutaDetalle})">
+                <i class="fas fa-clipboard-check"></i> Registrar visita
+               </button>`
+          }
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ========== MODAL VISITA ==========
+function abrirModalVisita(idRutaDetalle) {
+  puntoActual = rutaActiva.puntos.find(p => p.idRutaDetalle === idRutaDetalle);
+  if (!puntoActual) return;
+
+  geoActual = null;
+  carritoVenta = {};
+
+  // Info del cliente
+  const info = document.getElementById('modalVisitaInfo');
+  info.innerHTML = `
+    <div class="modal-cliente-nombre">
+      <i class="fas fa-user"></i>
+      ${puntoActual.cliente?.nombre || 'Dirección sin cliente'}
+    </div>
+    <div class="modal-cliente-dir">
+      <i class="fas fa-map-pin"></i>
+      ${puntoActual.direccion}
+    </div>`;
+
+  // Poblar estados
+  const sel = document.getElementById('visitaEstado');
+  sel.innerHTML = '<option value="">Seleccionar estado...</option>' +
+    estadosVisita.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
+  sel.value = '';
+
+  document.getElementById('visitaObservacion').value = '';
+  document.getElementById('ventaSection').style.display = 'none';
+  document.getElementById('totalVenta').style.display = 'none';
+
+  // Geolocalización
+  setGeoStatus('checking', '<i class="fas fa-spinner fa-spin"></i> Obteniendo ubicación GPS...');
+  document.getElementById('modalVisita').classList.add('show');
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        geoActual = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        const hasCoordenadas = puntoActual.latDireccion && puntoActual.lngDireccion;
+
+        if (hasCoordenadas) {
+          const dist = calcularDistancia(
+            geoActual.lat, geoActual.lng,
+            puntoActual.latDireccion, puntoActual.lngDireccion
+          );
+          if (dist <= 50) {
+            setGeoStatus('valid', `<i class="fas fa-check-circle"></i> Ubicación válida (${Math.round(dist)}m)`);
+          } else {
+            setGeoStatus('warn', `<i class="fas fa-exclamation-triangle"></i> Fuera de rango (${Math.round(dist)}m). Puede continuar.`);
+          }
+        } else {
+          setGeoStatus('valid', '<i class="fas fa-check-circle"></i> Ubicación obtenida');
+        }
+      },
+      () => {
+        setGeoStatus('warn', '<i class="fas fa-exclamation-triangle"></i> No se pudo obtener GPS. Puede continuar.');
+      },
+      { timeout: 8000 }
+    );
+  } else {
+    setGeoStatus('warn', '<i class="fas fa-exclamation-triangle"></i> GPS no disponible en este dispositivo.');
   }
 }
 
+function cerrarModalVisita() {
+  document.getElementById('modalVisita').classList.remove('show');
+  puntoActual = null;
+  geoActual = null;
+  carritoVenta = {};
+}
+
+function setGeoStatus(tipo, html) {
+  const el = document.getElementById('geoStatus');
+  el.className = `geo-status geo-${tipo}`;
+  el.innerHTML = html;
+}
+
+function onEstadoVisitaChange() {
+  const estadoId = parseInt(document.getElementById('visitaEstado').value);
+  const estadoObj = estadosVisita.find(e => e.id === estadoId);
+  const esVenta = estadoObj && estadoObj.nombre.toLowerCase().includes('venta');
+
+  const section = document.getElementById('ventaSection');
+  section.style.display = esVenta ? 'block' : 'none';
+
+  if (esVenta && productosCache.length > 0) {
+    renderProductosList();
+  }
+}
+
+function renderProductosList() {
+  const container = document.getElementById('productosList');
+  container.innerHTML = productosCache.map(p => `
+    <div class="producto-item">
+      <div class="producto-info">
+        <span class="producto-nombre">${p.Nombre || p.nombre}</span>
+        <span class="producto-precio">$${Number(p.Precio || p.precio || 0).toLocaleString('es-CO')}</span>
+        <span class="producto-stock">Stock: ${p.Stock || p.stock || 0}</span>
+      </div>
+      <div class="producto-cantidad">
+        <button type="button" onclick="cambiarCantidad(${p.IdProducto || p.id}, -1)">−</button>
+        <span id="cant-${p.IdProducto || p.id}">0</span>
+        <button type="button" onclick="cambiarCantidad(${p.IdProducto || p.id}, 1)">+</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.cambiarCantidad = function(idProducto, delta) {
+  const actual = carritoVenta[idProducto] || 0;
+  const nuevo = Math.max(0, actual + delta);
+  const producto = productosCache.find(p => (p.IdProducto || p.id) === idProducto);
+  const maxStock = producto?.Stock || producto?.stock || 99;
+
+  carritoVenta[idProducto] = Math.min(nuevo, maxStock);
+  document.getElementById(`cant-${idProducto}`).textContent = carritoVenta[idProducto];
+  actualizarTotal();
+};
+
+function actualizarTotal() {
+  let total = 0;
+  for (const [idProd, cant] of Object.entries(carritoVenta)) {
+    if (cant > 0) {
+      const prod = productosCache.find(p => (p.IdProducto || p.id) === parseInt(idProd));
+      if (prod) total += Number(prod.Precio || prod.precio || 0) * cant;
+    }
+  }
+  const totalEl = document.getElementById('totalVenta');
+  totalEl.style.display = total > 0 ? 'block' : 'none';
+  document.getElementById('totalVentaValor').textContent = `$${total.toLocaleString('es-CO')}`;
+}
+
+// ========== SUBMIT VISITA ==========
+async function handleSubmitVisita(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitVisita');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+  try {
+    const idEstado = parseInt(document.getElementById('visitaEstado').value);
+    if (!idEstado) throw new Error('Selecciona un estado de visita');
+
+    const observacion = document.getElementById('visitaObservacion').value.trim();
+
+    // 1. Registrar visita
+    const visitaPayload = {
+      IdRutaDetalle: puntoActual.idRutaDetalle,
+      IdRutaUsuario: rutaActiva.idRutaUsuario,
+      IdEstadoVisita: idEstado,
+      Latitud: geoActual?.lat || null,
+      Longitud: geoActual?.lng || null,
+      Observacion: observacion || null,
+      FechaHora: new Date().toISOString(),
+    };
+
+    const visitaRes = await api.crearVisita(visitaPayload);
+    const visita = visitaRes?.data || visitaRes;
+
+    // 2. Si hay productos en el carrito → crear pedido
+    const items = Object.entries(carritoVenta)
+      .filter(([, cant]) => cant > 0)
+      .map(([idProd, cant]) => ({ IdProducto: parseInt(idProd), Cantidad: cant }));
+
+    if (items.length > 0 && puntoActual.cliente?.id) {
+      await api.crearPedido({
+        clienteId: puntoActual.cliente.id,
+        items,
+        observaciones: observacion || '',
+      });
+    }
+
+    // 3. Actualizar estado visual del punto
+    const estadoObj = estadosVisita.find(ev => ev.id === idEstado);
+    puntoActual.estadoVisita = estadoObj?.nombre || 'Visitado';
+    renderPuntos(rutaActiva.puntos);
+
+    cerrarModalVisita();
+    showNotification('Visita registrada correctamente', 'success');
+  } catch (err) {
+    console.error(err);
+    showNotification(err.message || 'Error al registrar visita', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-check"></i> Guardar visita';
+  }
+}
+
+// ========== GEOLOCALIZACIÓN ==========
+function calcularDistancia(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 // ========== NOTIFICACIONES ==========
-function showSuccess(message) {
-  showNotification(message, 'success');
-}
-
-function showError(message) {
-  showNotification(message, 'error');
-}
-
 function showNotification(message, type = 'info') {
   const notif = document.createElement('div');
   notif.className = `notificacion notif-${type}`;
   notif.innerHTML = `
     <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-    <span>${message}</span>
-  `;
-
-  const style = document.createElement('style');
-  style.textContent = `
-    .notificacion {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 14px 20px;
-      border-radius: 8px;
-      color: white;
-      z-index: 10000;
-      animation: slideIn 0.3s ease-out;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .notif-success { background: #10b981; }
-    .notif-error { background: #ef4444; }
-    .notif-info { background: #3b82f6; }
-    @keyframes slideIn {
-      from { transform: translateX(400px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOut {
-      from { transform: translateX(0); opacity: 1; }
-      to { transform: translateX(400px); opacity: 0; }
-    }
-  `;
+    <span>${message}</span>`;
 
   if (!document.querySelector('style[data-notif]')) {
+    const style = document.createElement('style');
     style.setAttribute('data-notif', 'true');
+    style.textContent = `
+      .notificacion{position:fixed;top:20px;right:20px;padding:14px 20px;border-radius:8px;
+        color:#fff;z-index:10000;animation:slideIn .3s ease-out;display:flex;align-items:center;
+        gap:10px;box-shadow:0 4px 12px rgba(0,0,0,.15);}
+      .notif-success{background:#10b981;}.notif-error{background:#ef4444;}.notif-info{background:#3b82f6;}
+      @keyframes slideIn{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}
+      @keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(400px);opacity:0}}`;
     document.head.appendChild(style);
   }
 
   document.body.appendChild(notif);
-
   setTimeout(() => {
-    notif.style.animation = 'slideOut 0.3s ease-out';
-    setTimeout(() => {
-      notif.remove();
-    }, 300);
+    notif.style.animation = 'slideOut .3s ease-out';
+    setTimeout(() => notif.remove(), 300);
   }, 3000);
 }
+
+// Exponer para onclick en HTML
+window.seleccionarRuta = seleccionarRuta;
+window.abrirModalVisita = abrirModalVisita;

@@ -79,10 +79,19 @@ export class RutaRepository {
   // Obtener rutas por usuario
   async findByUsuario(usuarioId) {
     return prisma.rutausuario.findMany({
-      where: { IdUsuario: usuarioId },
+      where: { IdUsuario: parseInt(usuarioId) },
       include: {
         ruta: {
-          include: { rutadetalle: true },
+          include: {
+            rutadetalle: {
+              include: {
+                direccion: {
+                  include: { cliente: true },
+                },
+              },
+              orderBy: { OrdenVisita: 'asc' },
+            },
+          },
         },
       },
     });

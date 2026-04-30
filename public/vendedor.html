@@ -32,71 +32,93 @@
   </div>
 
   <div class="main-content">
-    <div class="route-info">
-      <h2 id="routeTitle">Mi Ruta</h2>
-      <p id="routeSubtitle">Puntos de visita del día</p>
+    <!-- SELECTOR DE RUTAS -->
+    <div id="rutaSelector" style="display:none;">
+      <div class="route-info">
+        <h2>Mis Rutas</h2>
+        <p>Selecciona la ruta activa para hoy</p>
+      </div>
+      <div id="rutaCards" class="ruta-cards-grid"></div>
     </div>
 
-    <div class="ruta-container">
-      <div class="ruta-timeline">
-        <!-- PUNTO DE PARTIDA -->
-        <div class="timeline-item starting-point">
-          <div class="timeline-marker">
-            <i class="fas fa-location-dot"></i>
-            <span class="marker-label">INICIO</span>
-          </div>
-          <div class="point-content">
-            <div class="point-header">
-              <h3>Punto de Partida</h3>
-              <p id="sedeInfo">Sede Principal</p>
-            </div>
-            <button class="btn-add-client" id="btnAddClient">
-              <i class="fas fa-plus-circle"></i>
-              Nuevo Cliente
-            </button>
-          </div>
-        </div>
+    <!-- DETALLE DE RUTA ACTIVA -->
+    <div id="rutaDetalle" style="display:none;">
+      <div class="route-info">
+        <button id="btnVolverRutas" style="background:none;border:none;cursor:pointer;color:#6b7280;font-size:13px;margin-bottom:8px;">
+          <i class="fas fa-arrow-left"></i> Mis rutas
+        </button>
+        <h2 id="routeTitle">Mi Ruta</h2>
+        <p id="routeSubtitle">Puntos de visita del día</p>
+      </div>
 
-        <!-- CONECTORES Y PUNTOS DE VISITA -->
-        <div class="timeline-items" id="pointsList">
-          <!-- Lista de puntos generada dinámicamente -->
+      <div class="ruta-container">
+        <div class="ruta-timeline">
+          <div class="timeline-item starting-point">
+            <div class="timeline-marker">
+              <i class="fas fa-location-dot"></i>
+              <span class="marker-label">INICIO</span>
+            </div>
+            <div class="point-content">
+              <div class="point-header">
+                <h3>Punto de Partida</h3>
+                <p id="sedeInfo">Sede Principal</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline-items" id="pointsList"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- LOADING / EMPTY STATE -->
+    <div id="loadingState">
+      <div class="empty-state">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Cargando...</p>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal para crear nuevo cliente -->
-<div class="modal" id="modalNuevoCliente">
+<!-- ===== MODAL: REGISTRAR VISITA ===== -->
+<div class="modal" id="modalVisita">
   <div class="modal-content">
     <div class="modal-header">
-      <h2>Nuevo Cliente</h2>
-      <button class="close-btn" id="closeModalBtn"><i class="fas fa-times"></i></button>
+      <h2><i class="fas fa-clipboard-check"></i> Registrar Visita</h2>
+      <button class="close-btn" id="closeModalVisita"><i class="fas fa-times"></i></button>
     </div>
-    <form id="formNuevoCliente">
+    <div id="geoStatus" class="geo-status geo-checking">
+      <i class="fas fa-spinner fa-spin"></i> Obteniendo ubicación...
+    </div>
+    <div id="modalVisitaInfo" class="modal-cliente-info"></div>
+    <form id="formVisita">
       <div class="form-group">
-        <label for="clientNombre">Nombre del Cliente</label>
-        <input type="text" id="clientNombre" required>
+        <label>Estado de la visita</label>
+        <select id="visitaEstado" required>
+          <option value="">Seleccionar estado...</option>
+        </select>
       </div>
       <div class="form-group">
-        <label for="clientCalle">Calle/Carrera</label>
-        <input type="text" id="clientCalle" required>
+        <label for="visitaObservacion">Observación</label>
+        <textarea id="visitaObservacion" rows="3" placeholder="Comentarios opcionales..."></textarea>
       </div>
-      <div class="form-group">
-        <label for="clientNumero">Número</label>
-        <input type="text" id="clientNumero" required>
+
+      <!-- Sección venta (se muestra si estado = Venta Realizada) -->
+      <div id="ventaSection" style="display:none;">
+        <hr style="margin:16px 0;">
+        <h4><i class="fas fa-shopping-cart"></i> Productos del pedido</h4>
+        <div id="productosList" class="productos-list"></div>
+        <div class="total-venta" id="totalVenta" style="display:none;">
+          <strong>Total: </strong><span id="totalVentaValor">$0</span>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="clientBarrio">Barrio</label>
-        <input type="text" id="clientBarrio" required>
-      </div>
-      <div class="form-group">
-        <label for="clientTelefono">Teléfono</label>
-        <input type="tel" id="clientTelefono" required>
-      </div>
+
       <div class="form-actions">
-        <button type="button" class="btn-cancel" id="btnCancelForm">Cancelar</button>
-        <button type="submit" class="btn-submit">Guardar Cliente</button>
+        <button type="button" class="btn-cancel" id="cancelVisita">Cancelar</button>
+        <button type="submit" class="btn-submit" id="submitVisita">
+          <i class="fas fa-check"></i> Guardar visita
+        </button>
       </div>
     </form>
   </div>

@@ -73,6 +73,14 @@ app.get('/api/roles', async (req, res) => {
     res.status(500).json({ success: false, message: e.message });
   }
 });
+app.get('/api/estadosvisita', async (req, res) => {
+  try {
+    const estados = await prisma.estadovisita.findMany({ orderBy: { IdEstadoVisita: 'asc' } });
+    res.json({ success: true, data: estados });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
 app.use('/api/regiones', regionRoutes);
 app.use('/api/ciudades', ciudadRoutes);
 app.use('/api/sedes', sedeRoutes);
