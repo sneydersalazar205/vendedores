@@ -1,349 +1,203 @@
-# 📦 Arquitectura Modular del Proyecto - Guía Completa
+# RutaSmart API + Frontend
 
-## 🏗️ Estructura de Capas
+Proyecto para la gestión de rutas comerciales, visitas y ventas con arquitectura por capas (Node.js + Express + Prisma) y frontend estático.
 
-Tu proyecto está organizado en una arquitectura de capas que separa responsabilidades:
+## 📁 Estructura del proyecto
 
-```
+```bash
+public/
+├── html/              # Vistas HTML
+│   ├── index.html
+│   ├── login.html
+│   ├── admin.html
+│   └── vendedor.html
+├── css/               # Estilos
+│   ├── admin.css
+│   └── vendedor.css
+└── js/                # Lógica frontend
+    ├── api.js
+    ├── admin.js
+    └── vendedor.js
+
 src/
-├── models/              # 🗄️ Conexión a base de datos
-│   └── prisma.js        # Instancia única de Prisma Client
-├── repositories/        # 📚 Acceso a datos
-│   ├── usuarioRepository.js
-│   ├── clienteRepository.js
-│   ├── productoRepository.js
-│   ├── pedidoRepository.js
-│   ├── rutaRepository.js
-│   ├── visitaRepository.js
-│   └── comisionRepository.js
-├── services/            # ⚙️ Lógica de negocio
-│   ├── usuarioService.js
-│   ├── clienteService.js
-│   ├── productoService.js
-│   ├── pedidoService.js
-│   ├── rutaService.js
-│   ├── visitaService.js
-│   └── comisionService.js
-├── controllers/         # 🎮 Controladores HTTP
-│   ├── usuarioController.js
-│   ├── clienteController.js
-│   ├── productoController.js
-│   ├── pedidoController.js
-│   ├── rutaController.js
-│   ├── visitaController.js
-│   └── comisionController.js
-├── routes/              # 🛣️ Definición de rutas
-│   ├── usuarioRoutes.js
-│   ├── clienteRoutes.js
-│   ├── productoRoutes.js
-│   ├── pedidoRoutes.js
-│   ├── rutaRoutes.js
-│   ├── visitaRoutes.js
-│   └── comisionRoutes.js
-├── middlewares/         # 🚦 Middlewares
-│   ├── errorHandler.js  # Manejo global de errores
-│   ├── validation.js    # Validación con Zod
-│   ├── auth.js          # Autenticación y JWT
-│   └── security.js      # CORS, rate limiting, headers
-├── validators/          # ✅ Esquemas de validación
-├── utils/               # 🛠️ Utilidades
-├── index.js             # 🚀 Punto de entrada
-├── prisma/
-│   └── schema.prisma    # Esquema de BD
-└── .env.example         # Plantilla de variables de entorno
+├── controllers/       # Manejo HTTP
+├── services/          # Lógica de negocio
+├── repositories/      # Acceso a datos
+├── routes/            # Definición endpoints
+├── middlewares/       # Seguridad/errores/validación
+├── models/            # Conexiones a BD
+└── index.js           # Entrypoint backend
 ```
 
----
+## 🧱 Arquitectura (resumen)
 
-## 🎯 Responsabilidades de Cada Capa
+Flujo de petición:
 
-### 1️⃣ **Models** (`src/models/`)
-- **Función**: Define la conexión a la base de datos
-- **Qué hace**: Crea una instancia única de Prisma Client
-- **Qué NO hace**: ❌ NUNCA lógica de negocio
-- **Archivos**:
-  - `prisma.js` - Instancia de Prisma con manejo de conexión
+1. `Route` recibe endpoint.
+2. `Controller` procesa request/response.
+3. `Service` aplica reglas de negocio.
+4. `Repository` ejecuta consultas a BD.
+5. `Model` expone Prisma/Pool.
 
-### 2️⃣ **Repositories** (`src/repositories/`)
-- **Función**: Acceso a datos (capa de persistencia)
-- **Qué hace**: 
-  - Consultas Prisma (`findMany`, `create`, `update`, `delete`)
-  - Un repositorio por entidad
-  - Métodos reutilizables
-- **Qué NO hace**: ❌ Lógica de negocio, validaciones complejas
-- **Archivos**: `usuarioRepository.js`, `clienteRepository.js`, etc.
+## ✅ Requisitos
 
-**Ejemplo**:
-```javascript
-// No hacer en Repository:
-async registrarUsuario(data) {
-  // Validar, hashear, lógica de negocio ❌
-}
+- Node.js 18+
+- npm 9+
+- Base de datos PostgreSQL/MySQL (según `prisma/schema.prisma`)
 
-// Sí hacer en Repository:
-async create(data) {
-  return prisma.usuario.create({ data });
-}
-```
+## ⚙️ Instalación
 
-### 3️⃣ **Services** (`src/services/`)
-- **Función**: Lógica de negocio
-- **Qué hace**:
-  - Validaciones
-  - Transformaciones de datos
-  - Orquestación entre repositorios
-  - Reglas de negocio
-- **Qué NO hace**: ❌ Manejo de peticiones HTTP
-- **Archivos**: `usuarioService.js`, `clienteService.js`, etc.
-
-**Ejemplo**:
-```javascript
-// En Service:
-async registrarUsuario(data) {
-  // ✅ Validar email único
-  // ✅ Validar contraseña fuerte
-  // ✅ Hashear contraseña
-  // ✅ Llamar al repositorio
-}
-```
-
-### 4️⃣ **Controllers** (`src/controllers/`)
-- **Función**: Manejo de peticiones HTTP
-- **Qué hace**:
-  - Recibir `req` y enviar `res`
-  - Llamar al servicio
-  - Formatear respuestas
-  - Manejo básico de errores HTTP
-- **Qué NO hace**: ❌ Lógica de negocio
-- **Archivos**: `usuarioController.js`, `clienteController.js`, etc.
-
-**Ejemplo**:
-```javascript
-// En Controller:
-async registrar(req, res) {
-  try {
-    const usuario = await usuarioService.registrarUsuario(req.body);
-    res.status(201).json({ success: true, data: usuario });
-  } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
-  }
-}
-```
-
-### 5️⃣ **Routes** (`src/routes/`)
-- **Función**: Definición de rutas HTTP
-- **Qué hace**:
-  - Mapear rutas a controladores
-  - Aplicar middlewares específicos
-  - Definir métodos HTTP
-- **Archivos**: `usuarioRoutes.js`, `clienteRoutes.js`, etc.
-
-**Ejemplo**:
-```javascript
-router.post('/registrar', usuarioController.registrar);
-router.get('/:id', usuarioController.obtenerPerfil);
-```
-
-### 6️⃣ **Middlewares** (`src/middlewares/`)
-- **Función**: Interceptores de peticiones
-- **Tipos**:
-  - **errorHandler.js** - Manejo global de errores
-  - **validation.js** - Validación con Zod
-  - **auth.js** - Autenticación JWT, autorización
-  - **security.js** - CORS, rate limiting, headers de seguridad
-
----
-
-## 📊 Flujo de una Petición HTTP
-
-```
-1. Cliente: POST /api/usuarios/registrar
-    ↓
-2. Express.js recibe la petición
-    ↓
-3. Middlewares (seguridad, validación, autenticación)
-    ↓
-4. Route (/api/usuarios) → Controller.registrar()
-    ↓
-5. Controller llama a Service.registrarUsuario()
-    ↓
-6. Service valida, ejecuta lógica de negocio
-    ↓
-7. Service llama a Repository.create()
-    ↓
-8. Repository ejecuta consulta Prisma
-    ↓
-9. Base de datos retorna datos
-    ↓
-10. Respuesta fluye hacia arriba con transformaciones
-    ↓
-11. Controller formatea respuesta JSON
-    ↓
-12. Cliente recibe: { success: true, data: usuario }
-```
-
----
-
-## 🚀 Cómo Usar
-
-### 1. Instalación
 ```bash
 npm install
 ```
 
-### 2. Configurar variables de entorno
+Crear `.env` con tus variables de entorno (base de datos, puerto, JWT, etc.).
+
+## 🗄️ Base de datos
+
 ```bash
-cp .env.example .env
-# Editar .env con tus credenciales de BD
+# Generar cliente Prisma
+npx prisma generate
+
+# Ejecutar migraciones
+npx prisma migrate dev
+
+# (Opcional) seed
+node prisma/seed.js
 ```
 
-### 3. Ejecutar migraciones
-```bash
-npm run prisma:migrate
-```
+## ▶️ Ejecución
 
-### 4. Iniciar el servidor
 ```bash
-# Desarrollo (con hot reload)
+# Desarrollo
 npm run dev
 
 # Producción
 npm start
 ```
 
----
+Servidor por defecto: `http://localhost:3000`
 
-## 📝 Rutas Disponibles
+## 🌐 Frontend
 
-### Usuarios
-```
-POST   /api/usuarios/registrar                    # Registrar usuario
-GET    /api/usuarios                               # Listar usuarios
-GET    /api/usuarios/:id                           # Obtener perfil
-PUT    /api/usuarios/:id                           # Actualizar usuario
-POST   /api/usuarios/:id/cambiar-contrasena       # Cambiar contraseña
-PATCH  /api/usuarios/:id/desactivar               # Desactivar usuario
-PATCH  /api/usuarios/:id/activar                  # Activar usuario
-```
+Con `express.static('public')` se sirven los recursos estáticos.
 
-### Clientes
-```
-POST   /api/clientes                               # Crear cliente
-GET    /api/clientes                               # Listar clientes
-GET    /api/clientes/:id                           # Obtener cliente
-PUT    /api/clientes/:id                           # Actualizar cliente
-DELETE /api/clientes/:id                           # Eliminar cliente
-PATCH  /api/clientes/:id/cambiar-estado           # Cambiar estado
-```
+- Inicio: `http://localhost:3000/html/index.html`
+- Login: `http://localhost:3000/html/login.html`
+- Panel admin: `http://localhost:3000/html/admin.html`
+- Panel vendedor: `http://localhost:3000/html/vendedor.html`
 
-### Productos
-```
-POST   /api/productos                              # Crear producto
-GET    /api/productos                              # Listar productos
-GET    /api/productos/stock-bajo                   # Stock bajo
-GET    /api/productos/:id                          # Obtener producto
-PUT    /api/productos/:id                          # Actualizar producto
-DELETE /api/productos/:id                          # Eliminar producto
-POST   /api/productos/:id/incrementar-stock        # Incrementar stock
-POST   /api/productos/:id/decrementar-stock        # Decrementar stock
-```
+## 🔌 Documentación de endpoints (API)
 
-### Pedidos
-```
-POST   /api/pedidos                                # Crear pedido
-GET    /api/pedidos                                # Listar pedidos
-GET    /api/pedidos/:id                            # Obtener pedido
-GET    /api/pedidos/cliente/:clienteId             # Pedidos del cliente
-GET    /api/pedidos/reporte/ventas                 # Reporte de ventas
-PATCH  /api/pedidos/:id/cancelar                   # Cancelar pedido
-```
+### Utilidades base
 
-### Rutas
-```
-POST   /api/rutas                                  # Crear ruta
-GET    /api/rutas                                  # Listar rutas
-GET    /api/rutas/activas                          # Rutas activas
-GET    /api/rutas/:id                              # Obtener ruta
-GET    /api/rutas/usuario/:usuarioId               # Rutas del usuario
-PUT    /api/rutas/:id                              # Actualizar ruta
-DELETE /api/rutas/:id                              # Eliminar ruta
+- Base URL: `http://localhost:3000`
+- Health/API root: `GET /`
+
+### Endpoints generales
+
+- `GET /api/roles`
+- `GET /api/estadosvisita`
+
+### Recursos principales
+
+- `/api/regiones`
+- `/api/ciudades`
+- `/api/sedes`
+- `/api/usuarios`
+- `/api/clientes`
+- `/api/productos`
+- `/api/pedidos`
+- `/api/rutas`
+- `/api/visitas`
+- `/api/comisiones`
+
+> Nota: cada recurso incluye operaciones CRUD y/o endpoints específicos según su router en `src/routes/`.
+
+## 🧪 Pruebas de endpoints
+
+### 1) Prueba rápida con scripts incluidos
+
+```bash
+bash test-api.sh
+bash test-crud.sh
+bash test-fix.sh
 ```
 
-### Visitas
-```
-POST   /api/visitas                                # Registrar visita
-GET    /api/visitas                                # Listar visitas
-GET    /api/visitas/validas                        # Visitas válidas
-GET    /api/visitas/:id                            # Obtener visita
-GET    /api/visitas/ruta/:rutaId                   # Visitas por ruta
-GET    /api/visitas/ruta/:rutaId/estadisticas     # Estadísticas
-POST   /api/visitas/:id/validar                    # Validar visita
-POST   /api/visitas/:id/observacion                # Agregar observación
+### 2) Prueba manual con cURL
+
+#### API base
+
+```bash
+curl -X GET http://localhost:3000/
 ```
 
-### Comisiones
-```
-POST   /api/comisiones                             # Calcular comisión
-GET    /api/comisiones                             # Listar comisiones
-GET    /api/comisiones/:id                         # Obtener comisión
-GET    /api/comisiones/reporte                     # Reporte de comisiones
-GET    /api/comisiones/periodo                     # Comisiones por período
-PATCH  /api/comisiones/:id/pagar                   # Pagar comisión
-PATCH  /api/comisiones/:id/rechazar                # Rechazar comisión
+#### Listar roles
+
+```bash
+curl -X GET http://localhost:3000/api/roles
 ```
 
----
+#### Listar usuarios
 
-## 💡 Buenas Prácticas
+```bash
+curl -X GET http://localhost:3000/api/usuarios
+```
 
-### ✅ DO's
-- ✅ Una responsabilidad por capa
-- ✅ Reutilizar métodos del repositorio
-- ✅ Validar en el servicio
-- ✅ Formatear respuestas en el controlador
-- ✅ Usar middlewares para funcionalidad transversal
-- ✅ Manejar errores apropiadamente
+#### Crear cliente (ejemplo)
 
-### ❌ DON'Ts
-- ❌ No poner lógica de negocio en controller
-- ❌ No hacer consultas directas en el controller
-- ❌ No validar en el modelo
-- ❌ No guardar conexión global sin singleton
-- ❌ No mezclar responsabilidades
+```bash
+curl -X POST http://localhost:3000/api/clientes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "Nombre": "Cliente Demo",
+    "Documento": "12345678",
+    "Telefono": "3000000000"
+  }'
+```
 
----
+#### Crear producto (ejemplo)
 
-## 🔐 Seguridad
+```bash
+curl -X POST http://localhost:3000/api/productos \
+  -H "Content-Type: application/json" \
+  -d '{
+    "Nombre": "Producto Demo",
+    "Precio": 10000,
+    "Stock": 20
+  }'
+```
 
-El proyecto incluye:
-- ✅ Validación con Zod
-- ✅ Autenticación JWT
-- ✅ Rate limiting
-- ✅ Headers de seguridad
-- ✅ CORS configurado
-- ✅ Manejo global de errores
-- ✅ Encriptación de contraseñas con bcrypt
+### 3) Pruebas con Postman
 
----
+Importar colección:
 
-## 📦 Dependencias Principales
+- `Postman_Collection.json`
 
-- **express** - Framework HTTP
-- **@prisma/client** - ORM para BD
-- **zod** - Validación de datos
-- **jsonwebtoken** - Autenticación JWT
-- **bcryptjs** - Encriptación de contraseñas
-- **dotenv** - Gestión de variables de entorno
+Pasos:
 
----
+1. Abrir Postman.
+2. Importar `Postman_Collection.json`.
+3. Configurar variable `baseUrl` si aplica (`http://localhost:3000`).
+4. Ejecutar la colección completa o por carpetas.
 
-## 🎓 Conclusión
+## 🛡️ Middlewares y seguridad
 
-Esta arquitectura modular te permite:
-- 🔄 Cambiar implementaciones fácilmente
-- 🧪 Escribir tests más fácilmente
-- 📈 Escalar la aplicación
-- 👥 Colaborar en equipo más eficientemente
-- 🐛 Debuggear problemas rápidamente
+- CORS configurable.
+- Headers de seguridad.
+- Rate limiting.
+- Manejo global de errores.
+- Validación de JSON inválido.
 
-¡Felicidades! Tu proyecto está estructurado profesionalmente. 🎉
+## 📚 Archivos de apoyo recomendados
+
+- `PRUEBAS_API.md`
+- `GUIA_PRUEBAS.md`
+- `QUICK_START.md`
+- `ARQUITECTURA.md`
+- `CONEXION_FRONTEND_BACKEND.md`
+
+## 👥 Notas de uso
+
+- Si accedes sin autenticación a vistas protegidas, el frontend redirige según lógica en `public/js/`.
+- Verifica que la BD esté levantada antes de correr pruebas de endpoints.
