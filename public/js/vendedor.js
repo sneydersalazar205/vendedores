@@ -13,16 +13,23 @@ let carritoVenta = {};       // { idProducto: cantidad }
 // ========== INICIALIZACIÓN ==========
 document.addEventListener('DOMContentLoaded', async () => {
   if (!api.getToken()) {
-    window.location.href = '/login.html';
+    window.location.href = '/html/login.html';
     return;
   }
 
   document.getElementById('logoutBtn').addEventListener('click', () => {
     api.logout();
-    window.location.href = '/login.html';
+    window.location.href = '/html/login.html';
   });
 
   document.getElementById('btnVolverRutas').addEventListener('click', mostrarSelectorRutas);
+
+  const goToOtherHtmlBtn = document.getElementById('goToOtherHtmlBtn');
+  if (goToOtherHtmlBtn) {
+    goToOtherHtmlBtn.addEventListener('click', () => {
+      window.location.href = '/html/index.html';
+    });
+  }
 
   // Modales
   document.getElementById('closeModalVisita').addEventListener('click', cerrarModalVisita);
