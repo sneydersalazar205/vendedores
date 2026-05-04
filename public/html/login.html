@@ -130,7 +130,7 @@
 
     // Si ya hay sesión, ir directo al panel
     if (api.getToken()) {
-      window.location.href = '/index.html';
+      window.location.href = '/html/index.html';
     }
 
     form.addEventListener('submit', async (e) => {
@@ -142,7 +142,7 @@
       try {
         const res = await api.login(email, password);
         localStorage.setItem('userName', res.data?.Nombre || 'Usuario');
-        window.location.href = '/index.html';
+        window.location.href = '/html/index.html';
       } catch (err) {
         errorMsg.textContent = err.message || 'Error al iniciar sesión. Verifica tus credenciales.';
         errorMsg.style.display = 'block';
